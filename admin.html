@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Sistem Izin Staff</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="admin-container">
+            <!-- Admin Header -->
+            <header class="admin-header">
+                <div class="header-left">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3067/3067256.png" alt="Logo" class="dashboard-logo">
+                    <h1><i class="fas fa-cogs"></i> Admin Panel</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span id="adminName">Administrator</span>
+                        <button id="adminLogoutBtn" class="btn-secondary">
+                            <i class="fas fa-sign-out-alt"></i> Keluar
+                        </button>
+                        <button id="backToDashboardBtn" class="btn-primary">
+                            <i class="fas fa-home"></i> Dashboard
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="admin-content">
+                <!-- Sidebar Menu -->
+                <div class="admin-sidebar">
+                    <div class="admin-menu">
+                        <div class="menu-item active" data-section="settings">
+                            <i class="fas fa-sliders-h"></i> Pengaturan Sistem
+                        </div>
+                        <div class="menu-item" data-section="staff">
+                            <i class="fas fa-users"></i> Kelola Staff
+                        </div>
+                        <div class="menu-item" data-section="permissions">
+                            <i class="fas fa-history"></i> Riwayat Izin
+                        </div>
+                        <div class="menu-item" data-section="system">
+                            <i class="fas fa-paint-brush"></i> Tampilan Sistem
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Content Area -->
+                <div class="admin-main">
+                    <!-- Settings Section -->
+                    <div id="settingsSection" class="admin-section active">
+                        <h2><i class="fas fa-sliders-h"></i> Pengaturan Sistem</h2>
+                        
+                        <div class="settings-form">
+                            <div class="input-group">
+                                <label for="max15Min"><i class="fas fa-clock"></i> Maksimal Izin 15 Menit per Hari</label>
+                                <input type="number" id="max15Min" min="1" max="10" value="4">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="max7Min"><i class="fas fa-utensils"></i> Maksimal Izin Makan 7 Menit per Hari</label>
+                                <input type="number" id="max7Min" min="1" max="10" value="3">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="loginWindow"><i class="fas fa-door-open"></i> Jendela Login (jam setelah shift)</label>
+                                <input type="number" id="loginWindow" min="1" max="24" value="2">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="adminCode"><i class="fas fa-key"></i> Kode Admin</label>
+                                <input type="text" id="adminCode" value="ADMIN123">
+                                <small>Kode untuk akses admin tambahan</small>
+                            </div>
+                            
+                            <button id="saveSettingsBtn" class="btn-primary">
+                                <i class="fas fa-save"></i> Simpan Pengaturan
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Staff Management Section -->
+                    <div id="staffSection" class="admin-section">
+                        <h2><i class="fas fa-users"></i> Kelola Staff</h2>
+                        
+                        <div class="staff-management">
+                            <div class="staff-list-section">
+                                <h3><i class="fas fa-list"></i> Daftar Staff</h3>
+                                <div class="staff-table-container">
+                                    <table class="staff-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nama</th>
+                                                <th>Username</th>
+                                                <th>Jobdesk</th>
+                                                <th>Shift</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="staffTableBody">
+                                            <!-- Staff data will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="staff-form-section">
+                                <h3><i class="fas fa-user-plus"></i> Tambah/Edit Staff</h3>
+                                <div class="staff-form">
+                                    <input type="hidden" id="editStaffId">
+                                    
+                                    <div class="input-group">
+                                        <label for="staffName"><i class="fas fa-id-card"></i> Nama Lengkap</label>
+                                        <input type="text" id="staffName" placeholder="Nama staff">
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <label for="staffUsername"><i class="fas fa-user"></i> Username</label>
+                                        <input type="text" id="staffUsername" placeholder="Username untuk login">
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <label for="staffPassword"><i class="fas fa-lock"></i> Password</label>
+                                        <input type="password" id="staffPassword" placeholder="Password">
+                                        <small>Kosongkan jika tidak ingin mengubah password</small>
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <label for="staffJobdesk"><i class="fas fa-briefcase"></i> Jobdesk</label>
+                                        <input type="text" id="staffJobdesk" placeholder="Jobdesk staff">
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <label for="staffShiftStart"><i class="fas fa-clock"></i> Shift Mulai</label>
+                                        <input type="time" id="staffShiftStart" value="08:00">
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <label for="staffShiftEnd"><i class="fas fa-clock"></i> Shift Selesai</label>
+                                        <input type="time" id="staffShiftEnd" value="16:00">
+                                    </div>
+                                    
+                                    <div class="form-buttons">
+                                        <button id="saveStaffBtn" class="btn-primary">
+                                            <i class="fas fa-save"></i> Simpan Staff
+                                        </button>
+                                        <button id="clearStaffFormBtn" class="btn-secondary">
+                                            <i class="fas fa-times"></i> Bersihkan
+                                        </button>
+                                        <button id="deleteStaffBtn" class="btn-danger" style="display: none;">
+                                            <i class="fas fa-trash"></i> Hapus Staff
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Permissions History Section -->
+                    <div id="permissionsSection" class="admin-section">
+                        <h2><i class="fas fa-history"></i> Riwayat Izin</h2>
+                        
+                        <div class="history-filters">
+                            <div class="input-group">
+                                <label for="filterDate"><i class="fas fa-calendar"></i> Tanggal</label>
+                                <input type="date" id="filterDate">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="filterStaff"><i class="fas fa-user"></i> Staff</label>
+                                <select id="filterStaff">
+                                    <option value="">Semua Staff</option>
+                                </select>
+                            </div>
+                            
+                            <button id="filterHistoryBtn" class="btn-primary">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                        </div>
+                        
+                        <div class="history-table-container">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Staff</th>
+                                        <th>Jobdesk</th>
+                                        <th>Jenis Izin</th>
+                                        <th>Alasan</th>
+                                        <th>Durasi</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyTableBody">
+                                    <!-- History data will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- System Display Section -->
+                    <div id="systemSection" class="admin-section">
+                        <h2><i class="fas fa-paint-brush"></i> Tampilan Sistem</h2>
+                        
+                        <div class="system-display-form">
+                            <div class="input-group">
+                                <label for="systemLogo"><i class="fas fa-image"></i> URL Logo Sistem</label>
+                                <input type="text" id="systemLogo" placeholder="https://example.com/logo.png">
+                                <small>Masukkan URL gambar untuk logo sistem</small>
+                            </div>
+                            
+                            <div class="logo-preview">
+                                <h4>Pratinjau Logo:</h4>
+                                <img id="logoPreview" src="" alt="Pratinjau Logo" style="max-width: 100px; margin-top: 10px;">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="backgroundImage"><i class="fas fa-wallpaper"></i> URL Background</label>
+                                <input type="text" id="backgroundImage" placeholder="https://example.com/background.jpg">
+                                <small>Masukkan URL gambar untuk background (opsional)</small>
+                            </div>
+                            
+                            <div class="background-preview">
+                                <h4>Pratinjau Background:</h4>
+                                <div id="backgroundPreview" style="width: 100%; height: 150px; background-size: cover; margin-top: 10px; border-radius: 10px;"></div>
+                            </div>
+                            
+                            <button id="saveDisplaySettingsBtn" class="btn-primary">
+                                <i class="fas fa-save"></i> Simpan Tampilan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification System -->
+    <div id="notification" class="notification">
+        <div class="notification-content">
+            <span id="notificationText"></span>
+            <button class="notification-close">&times;</button>
+        </div>
+    </div>
+
+    <script src="database.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
