@@ -5,28 +5,32 @@
 }
 
 :root {
-    --space-dark: #0a0e17;
-    --space-blue: #1a1f38;
-    --neon-blue: #00f3ff;
-    --neon-purple: #9d00ff;
-    --neon-pink: #ff00c8;
-    --star-white: #ffffff;
-    --planet-1: #ff6b6b;
-    --planet-2: #4ecdc4;
-    --planet-3: #ffe66d;
+    --primary-dark: #1a237e;
+    --primary-blue: #283593;
+    --primary-light: #3949ab;
+    --accent-blue: #2962ff;
+    --accent-green: #00c853;
+    --accent-red: #ff1744;
     --text-primary: #ffffff;
-    --text-secondary: #a0a8c3;
-    --card-bg: rgba(26, 31, 56, 0.8);
-    --card-border: rgba(0, 243, 255, 0.2);
+    --text-secondary: #b0bec5;
+    --card-bg: rgba(255, 255, 255, 0.1);
+    --card-border: rgba(255, 255, 255, 0.2);
 }
 
 body {
-    font-family: 'Space Grotesk', sans-serif;
-    background: var(--space-dark);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
     color: var(--text-primary);
     min-height: 100vh;
     overflow-x: hidden;
     position: relative;
+}
+
+/* Hapus semua animasi bintang & planet */
+#stars, #stars2, #stars3,
+.planet, .planet-1, .planet-2, .planet-3,
+.star, .meteor {
+    display: none !important;
 }
 
 #stars, #stars2, #stars3 {
@@ -816,4 +820,5 @@ select:focus, textarea:focus {
     .login-form {
         padding: 20px;
     }
+
 }
