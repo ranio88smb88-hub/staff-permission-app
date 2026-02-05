@@ -44,6 +44,33 @@ body {
     display: block;
 }
 
+/* Login Footer */
+.login-footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(189, 195, 199, 0.3);
+    text-align: center;
+}
+
+.credentials-info {
+    color: var(--gray-medium);
+    font-size: 0.85rem;
+    background: rgba(236, 240, 241, 0.3);
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.credentials-info strong {
+    color: var(--ocean-deep);
+    font-weight: 600;
+}
+
+.credentials-info i {
+    color: var(--sea-green);
+    margin-right: 5px;
+}
+
 /* Login Screen */
 .login-container {
     max-width: 500px;
@@ -677,3 +704,4 @@ body {
         display: none;
     }
 }
+
