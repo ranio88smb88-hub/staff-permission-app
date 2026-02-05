@@ -1,386 +1,252 @@
-// Admin Panel JavaScript
-class AdminPanel {
-    constructor() {
-        this.db = database;
-        this.initializeEventListeners();
-        this.loadSettings();
-        this.loadStaffData();
-        this.loadHistoryData();
-        this.loadDisplaySettings();
-        
-        // Check if user is admin
-        this.checkAdminAccess();
-    }
-
-    checkAdminAccess() {
-        const savedUser = localStorage.getItem('currentStaffUser');
-        if (!savedUser) {
-            window.location.href = 'index.html';
-            return;
-        }
-        
-        const user = JSON.parse(savedUser);
-        if (!user.isAdmin) {
-            window.location.href = 'index.html';
-        }
-    }
-
-    initializeEventListeners() {
-        // Menu navigation
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const section = item.dataset.section;
-                this.switchSection(section);
-            });
-        });
-
-        // Logout
-        document.getElementById('adminLogoutBtn').addEventListener('click', () => {
-            localStorage.removeItem('currentStaffUser');
-            window.location.href = 'index.html';
-        });
-
-        // Back to dashboard
-        document.getElementById('backToDashboardBtn').addEventListener('click', () => {
-            window.location.href = 'index.html';
-        });
-
-        // Save settings
-        document.getElementById('saveSettingsBtn').addEventListener('click', () => this.saveSettings());
-
-        // Staff management
-        document.getElementById('saveStaffBtn').addEventListener('click', () => this.saveStaff());
-        document.getElementById('clearStaffFormBtn').addEventListener('click', () => this.clearStaffForm());
-        document.getElementById('deleteStaffBtn').addEventListener('click', () => this.deleteStaff());
-
-        // History filter
-        document.getElementById('filterHistoryBtn').addEventListener('click', () => this.loadHistoryData());
-
-        // Display settings
-        document.getElementById('saveDisplaySettingsBtn').addEventListener('click', () => this.saveDisplaySettings());
-        document.getElementById('systemLogo').addEventListener('input', (e) => this.updateLogoPreview(e.target.value));
-        document.getElementById('backgroundImage').addEventListener('input', (e) => this.updateBackgroundPreview(e.target.value));
-
-        // Notification close
-        document.querySelector('.notification-close').addEventListener('click', () => {
-            this.hideNotification();
-        });
-    }
-
-    switchSection(sectionId) {
-        // Hide all sections
-        document.querySelectorAll('.admin-section').forEach(section => {
-            section.classList.remove('active');
-        });
-        
-        // Remove active class from all menu items
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        
-        // Show selected section
-        document.getElementById(`${sectionId}Section`).classList.add('active');
-        
-        // Add active class to selected menu item
-        document.querySelector(`.menu-item[data-section="${sectionId}"]`).classList.add('active');
-    }
-
-    loadSettings() {
-        const settings = this.db.getSettings();
-        
-        document.getElementById('max15Min').value = settings.max15MinPermissions;
-        document.getElementById('max7Min').value = settings.max7MinPermissions;
-        document.getElementById('loginWindow').value = settings.loginWindowHours;
-        document.getElementById('adminCode').value = settings.adminCode;
-    }
-
-    saveSettings() {
-        const newSettings = {
-            max15MinPermissions: parseInt(document.getElementById('max15Min').value),
-            max7MinPermissions: parseInt(document.getElementById('max7Min').value),
-            loginWindowHours: parseInt(document.getElementById('loginWindow').value),
-            adminCode: document.getElementById('adminCode').value
-        };
-
-        const result = this.db.updateSettings(newSettings);
-        this.showNotification(result.message, result.success ? 'success' : 'warning');
-    }
-
-    loadStaffData() {
-        const staff = this.db.getAllStaff();
-        const staffTableBody = document.getElementById('staffTableBody');
-        const filterStaffSelect = document.getElementById('filterStaff');
-        
-        // Clear existing data
-        staffTableBody.innerHTML = '';
-        filterStaffSelect.innerHTML = '<option value="">Semua Staff</option>';
-        
-        if (staff.length === 0) {
-            staffTableBody.innerHTML = `
-                <tr>
-                    <td colspan="5" style="text-align: center; padding: 20px;">
-                        Tidak ada data staff
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-        
-        // Populate staff table
-        staff.forEach(staffMember => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${staffMember.name}</td>
-                <td>${staffMember.username}</td>
-                <td>${staffMember.jobdesk}</td>
-                <td>${staffMember.shiftStart} - ${staffMember.shiftEnd}</td>
-                <td>
-                    <button class="btn-edit" data-id="${staffMember.id}">
-                        <i class="fas fa-edit"></i> Edit
-                    </button>
-                </td>
-            `;
-            staffTableBody.appendChild(row);
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Sistem Izin Staff</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="admin-container">
+            <!-- Admin Header -->
+            <header class="admin-header">
+                <div class="header-left">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3067/3067256.png" alt="Logo" class="dashboard-logo">
+                    <h1><i class="fas fa-cogs"></i> Admin Panel</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span id="adminName">Administrator</span>
+                        <button id="adminLogoutBtn" class="btn-secondary">
+                            <i class="fas fa-sign-out-alt"></i> Keluar
+                        </button>
+                        <button id="backToDashboardBtn" class="btn-primary">
+                            <i class="fas fa-home"></i> Dashboard
+                        </button>
+                    </div>
+                </div>
+            </header>
             
-            // Add to filter select
-            const option = document.createElement('option');
-            option.value = staffMember.id;
-            option.textContent = staffMember.name;
-            filterStaffSelect.appendChild(option);
-        });
-        
-        // Add event listeners to edit buttons
-        document.querySelectorAll('.btn-edit').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const staffId = parseInt(e.currentTarget.dataset.id);
-                this.editStaff(staffId);
-            });
-        });
-    }
+            <div class="admin-content">
+                <!-- Sidebar Menu -->
+                <div class="admin-sidebar">
+                    <div class="admin-menu">
+                        <div class="menu-item active" data-section="settings">
+                            <i class="fas fa-sliders-h"></i> Pengaturan Sistem
+                        </div>
+                        <div class="menu-item" data-section="staff">
+                            <i class="fas fa-users"></i> Kelola Staff
+                        </div>
+                        <div class="menu-item" data-section="permissions">
+                            <i class="fas fa-history"></i> Riwayat Izin
+                        </div>
+                        <div class="menu-item" data-section="system">
+                            <i class="fas fa-paint-brush"></i> Tampilan Sistem
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Content Area -->
+                <div class="admin-main">
+                    <!-- Settings Section -->
+                    <div id="settingsSection" class="admin-section active">
+                        <h2><i class="fas fa-sliders-h"></i> Pengaturan Sistem</h2>
+                        
+                        <div class="settings-form">
+                            <div class="input-group">
+                                <label for="max15Min"><i class="fas fa-clock"></i> Maksimal Izin 15 Menit per Hari</label>
+                                <input type="number" id="max15Min" min="1" max="10" value="4">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="max7Min"><i class="fas fa-utensils"></i> Maksimal Izin Makan 7 Menit per Hari</label>
+                                <input type="number" id="max7Min" min="1" max="10" value="3">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="loginWindow"><i class="fas fa-door-open"></i> Jendela Login (jam setelah shift)</label>
+                                <input type="number" id="loginWindow" min="1" max="24" value="2">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="adminCode"><i class="fas fa-key"></i> Kode Admin</label>
+                                <input type="text" id="adminCode" value="ADMIN123">
+                                <small>Kode untuk akses admin tambahan</small>
+                            </div>
+                            
+                            <button id="saveSettingsBtn" class="btn-primary">
+                                <i class="fas fa-save"></i> Simpan Pengaturan
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Staff Management Section -->
+                    <div id="staffSection" class="admin-section">
+                        <h2><i class="fas fa-users"></i> Kelola Staff</h2>
+                        
+                        <div class="staff-management">
+                            <div class="staff-list-section">
+                                <h3><i class="fas fa-list"></i> Daftar Staff</h3>
+                                <div class="staff-table-container">
+                                    <table class="staff-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nama</th>
+                                                <th>Username</th>
+                                                <th>Jobdesk</th>
+                                                <th>Shift</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="staffTableBody">
+                                            <!-- Staff data will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="staff-form-section">
+                                <h3><i class="fas fa-user-plus"></i> Tambah/Edit Staff</h3>
+                                <div class="staff-form">
+                                    <input type="hidden" id="editStaffId">
+                                    
+                                    <div class="input-group">
+                                        <label for="staffName"><i class="fas fa-id-card"></i> Nama Lengkap</label>
+                                        <input type="text" id="staffName" placeholder="Nama staff">
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <label for="staffUsername"><i class="fas fa-user"></i> Username</label>
+                                        <input type="text" id="staffUsername" placeholder="Username untuk login">
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <label for="staffPassword"><i class="fas fa-lock"></i> Password</label>
+                                        <input type="password" id="staffPassword" placeholder="Password">
+                                        <small>Kosongkan jika tidak ingin mengubah password</small>
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <label for="staffJobdesk"><i class="fas fa-briefcase"></i> Jobdesk</label>
+                                        <input type="text" id="staffJobdesk" placeholder="Jobdesk staff">
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <label for="staffShiftStart"><i class="fas fa-clock"></i> Shift Mulai</label>
+                                        <input type="time" id="staffShiftStart" value="08:00">
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <label for="staffShiftEnd"><i class="fas fa-clock"></i> Shift Selesai</label>
+                                        <input type="time" id="staffShiftEnd" value="16:00">
+                                    </div>
+                                    
+                                    <div class="form-buttons">
+                                        <button id="saveStaffBtn" class="btn-primary">
+                                            <i class="fas fa-save"></i> Simpan Staff
+                                        </button>
+                                        <button id="clearStaffFormBtn" class="btn-secondary">
+                                            <i class="fas fa-times"></i> Bersihkan
+                                        </button>
+                                        <button id="deleteStaffBtn" class="btn-danger" style="display: none;">
+                                            <i class="fas fa-trash"></i> Hapus Staff
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Permissions History Section -->
+                    <div id="permissionsSection" class="admin-section">
+                        <h2><i class="fas fa-history"></i> Riwayat Izin</h2>
+                        
+                        <div class="history-filters">
+                            <div class="input-group">
+                                <label for="filterDate"><i class="fas fa-calendar"></i> Tanggal</label>
+                                <input type="date" id="filterDate">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="filterStaff"><i class="fas fa-user"></i> Staff</label>
+                                <select id="filterStaff">
+                                    <option value="">Semua Staff</option>
+                                </select>
+                            </div>
+                            
+                            <button id="filterHistoryBtn" class="btn-primary">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                        </div>
+                        
+                        <div class="history-table-container">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Staff</th>
+                                        <th>Jobdesk</th>
+                                        <th>Jenis Izin</th>
+                                        <th>Alasan</th>
+                                        <th>Durasi</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyTableBody">
+                                    <!-- History data will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- System Display Section -->
+                    <div id="systemSection" class="admin-section">
+                        <h2><i class="fas fa-paint-brush"></i> Tampilan Sistem</h2>
+                        
+                        <div class="system-display-form">
+                            <div class="input-group">
+                                <label for="systemLogo"><i class="fas fa-image"></i> URL Logo Sistem</label>
+                                <input type="text" id="systemLogo" placeholder="https://example.com/logo.png">
+                                <small>Masukkan URL gambar untuk logo sistem</small>
+                            </div>
+                            
+                            <div class="logo-preview">
+                                <h4>Pratinjau Logo:</h4>
+                                <img id="logoPreview" src="" alt="Pratinjau Logo" style="max-width: 100px; margin-top: 10px;">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="backgroundImage"><i class="fas fa-wallpaper"></i> URL Background</label>
+                                <input type="text" id="backgroundImage" placeholder="https://example.com/background.jpg">
+                                <small>Masukkan URL gambar untuk background (opsional)</small>
+                            </div>
+                            
+                            <div class="background-preview">
+                                <h4>Pratinjau Background:</h4>
+                                <div id="backgroundPreview" style="width: 100%; height: 150px; background-size: cover; margin-top: 10px; border-radius: 10px;"></div>
+                            </div>
+                            
+                            <button id="saveDisplaySettingsBtn" class="btn-primary">
+                                <i class="fas fa-save"></i> Simpan Tampilan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    editStaff(staffId) {
-        const staff = this.db.getAllStaff().find(s => s.id === staffId);
-        
-        if (!staff) {
-            this.showNotification('Staff tidak ditemukan', 'warning');
-            return;
-        }
-        
-        // Fill form with staff data
-        document.getElementById('editStaffId').value = staff.id;
-        document.getElementById('staffName').value = staff.name;
-        document.getElementById('staffUsername').value = staff.username;
-        document.getElementById('staffPassword').value = '';
-        document.getElementById('staffJobdesk').value = staff.jobdesk;
-        document.getElementById('staffShiftStart').value = staff.shiftStart;
-        document.getElementById('staffShiftEnd').value = staff.shiftEnd;
-        
-        // Show delete button
-        document.getElementById('deleteStaffBtn').style.display = 'inline-block';
-        
-        // Scroll to form
-        document.getElementById('staffSection').scrollIntoView({ behavior: 'smooth' });
-    }
+    <!-- Notification System -->
+    <div id="notification" class="notification">
+        <div class="notification-content">
+            <span id="notificationText"></span>
+            <button class="notification-close">&times;</button>
+        </div>
+    </div>
 
-    saveStaff() {
-        const staffId = document.getElementById('editStaffId').value;
-        const staffData = {
-            name: document.getElementById('staffName').value,
-            username: document.getElementById('staffUsername').value,
-            jobdesk: document.getElementById('staffJobdesk').value,
-            shiftStart: document.getElementById('staffShiftStart').value,
-            shiftEnd: document.getElementById('staffShiftEnd').value
-        };
-        
-        // Add password if provided
-        const password = document.getElementById('staffPassword').value;
-        if (password) {
-            staffData.password = password;
-        }
-        
-        let result;
-        if (staffId) {
-            // Update existing staff
-            result = this.db.updateStaff(parseInt(staffId), staffData);
-        } else {
-            // Add new staff
-            if (!password) {
-                this.showNotification('Password wajib diisi untuk staff baru', 'warning');
-                return;
-            }
-            result = this.db.addStaff(staffData);
-        }
-        
-        if (result.success) {
-            this.showNotification(result.message, 'success');
-            this.loadStaffData();
-            this.clearStaffForm();
-        } else {
-            this.showNotification(result.message, 'warning');
-        }
-    }
-
-    clearStaffForm() {
-        document.getElementById('editStaffId').value = '';
-        document.getElementById('staffName').value = '';
-        document.getElementById('staffUsername').value = '';
-        document.getElementById('staffPassword').value = '';
-        document.getElementById('staffJobdesk').value = '';
-        document.getElementById('staffShiftStart').value = '08:00';
-        document.getElementById('staffShiftEnd').value = '16:00';
-        document.getElementById('deleteStaffBtn').style.display = 'none';
-    }
-
-    deleteStaff() {
-        const staffId = document.getElementById('editStaffId').value;
-        
-        if (!staffId) {
-            this.showNotification('Tidak ada staff yang dipilih', 'warning');
-            return;
-        }
-        
-        if (confirm('Apakah Anda yakin ingin menghapus staff ini?')) {
-            const result = this.db.deleteStaff(parseInt(staffId));
-            
-            if (result.success) {
-                this.showNotification(result.message, 'success');
-                this.loadStaffData();
-                this.clearStaffForm();
-            } else {
-                this.showNotification(result.message, 'warning');
-            }
-        }
-    }
-
-    loadHistoryData() {
-        const db = this.db.getDatabase();
-        let filteredHistory = [...db.permissionsHistory].sort((a, b) => 
-            new Date(b.startTime) - new Date(a.startTime)
-        );
-        
-        // Apply filters
-        const filterDate = document.getElementById('filterDate').value;
-        const filterStaff = document.getElementById('filterStaff').value;
-        
-        if (filterDate) {
-            filteredHistory = filteredHistory.filter(record => {
-                const recordDate = new Date(record.startTime).toISOString().split('T')[0];
-                return recordDate === filterDate;
-            });
-        }
-        
-        if (filterStaff) {
-            filteredHistory = filteredHistory.filter(record => 
-                record.staffId === parseInt(filterStaff)
-            );
-        }
-        
-        // Display history
-        const historyTableBody = document.getElementById('historyTableBody');
-        historyTableBody.innerHTML = '';
-        
-        if (filteredHistory.length === 0) {
-            historyTableBody.innerHTML = `
-                <tr>
-                    <td colspan="7" style="text-align: center; padding: 20px;">
-                        Tidak ada data riwayat izin
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-        
-        filteredHistory.forEach(record => {
-            const startTime = new Date(record.startTime);
-            const endTime = record.endTime ? new Date(record.endTime) : null;
-            const duration = record.duration;
-            const staff = db.staff.find(s => s.id === record.staffId);
-            
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${startTime.toLocaleDateString('id-ID')}</td>
-                <td>${staff ? staff.name : 'Unknown'}</td>
-                <td>${record.staffJobdesk}</td>
-                <td>${record.type === '15min' ? '15 menit' : 'Makan 7 menit'}</td>
-                <td>${record.reason}</td>
-                <td>${duration} menit</td>
-                <td>
-                    <span class="permission-status ${record.status === 'completed' ? 'status-completed' : 'status-active'}">
-                        ${record.status === 'completed' ? 'Selesai' : 'Aktif'}
-                    </span>
-                </td>
-            `;
-            historyTableBody.appendChild(row);
-        });
-    }
-
-    loadDisplaySettings() {
-        const settings = this.db.getSettings();
-        
-        document.getElementById('systemLogo').value = settings.systemLogo || '';
-        document.getElementById('backgroundImage').value = settings.backgroundImage || '';
-        
-        this.updateLogoPreview(settings.systemLogo);
-        this.updateBackgroundPreview(settings.backgroundImage);
-    }
-
-    updateLogoPreview(logoUrl) {
-        const logoPreview = document.getElementById('logoPreview');
-        if (logoUrl) {
-            logoPreview.src = logoUrl;
-            logoPreview.style.display = 'block';
-        } else {
-            logoPreview.style.display = 'none';
-        }
-    }
-
-    updateBackgroundPreview(bgUrl) {
-        const bgPreview = document.getElementById('backgroundPreview');
-        if (bgUrl) {
-            bgPreview.style.backgroundImage = `url('${bgUrl}')`;
-            bgPreview.style.display = 'block';
-        } else {
-            bgPreview.style.display = 'none';
-        }
-    }
-
-    saveDisplaySettings() {
-        const newSettings = {
-            systemLogo: document.getElementById('systemLogo').value,
-            backgroundImage: document.getElementById('backgroundImage').value
-        };
-
-        const result = this.db.updateSettings(newSettings);
-        this.showNotification(result.message, result.success ? 'success' : 'warning');
-    }
-
-    showNotification(message, type = 'info') {
-        const notification = document.getElementById('notification');
-        const notificationText = document.getElementById('notificationText');
-        
-        notificationText.textContent = message;
-        
-        // Set color based on type
-        notification.style.borderLeftColor = 
-            type === 'success' ? '#2ecc71' : 
-            type === 'warning' ? '#f39c12' : 
-            type === 'error' ? '#e74c3c' : '#1a73e8';
-        
-        notification.style.display = 'block';
-        
-        // Auto hide after 5 seconds
-        setTimeout(() => {
-            this.hideNotification();
-        }, 5000);
-    }
-
-    hideNotification() {
-        const notification = document.getElementById('notification');
-        notification.style.display = 'none';
-    }
-}
-
-// Initialize the admin panel when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    window.adminPanel = new AdminPanel();
-});
+    <script src="database.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
