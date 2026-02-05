@@ -19,32 +19,46 @@
                 </div>
                 
                 <div class="login-form">
-                    <h2><i class="fas fa-sign-in-alt"></i> Masuk ke Akun</h2>
-                    
-                    <div class="input-group">
-                        <label for="username"><i class="fas fa-user"></i> Username</label>
-                        <input type="text" id="username" placeholder="Masukkan username">
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="password"><i class="fas fa-lock"></i> Password</label>
-                        <input type="password" id="password" placeholder="Masukkan password">
-                    </div>
-                    
-                    <div class="shift-info">
-                        <h3><i class="fas fa-clock"></i> Informasi Shift</h3>
-                        <p id="shiftTimeDisplay">Shift Anda: -</p>
-                        <p>Waktu login: 2 jam setelah shift dimulai</p>
-                    </div>
-                    
-                    <button id="loginBtn" class="btn-primary">
-                        <i class="fas fa-sign-in-alt"></i> Masuk
-                    </button>
-                    
-                    <div class="time-display" id="currentTime">
-                        <i class="fas fa-clock"></i> Loading...
-                    </div>
-                </div>
+    <h2><i class="fas fa-sign-in-alt"></i> Masuk ke Akun</h2>
+    
+    <div class="input-group">
+        <label for="username"><i class="fas fa-user"></i> Username</label>
+        <div class="input-with-icon">
+            <i class="fas fa-user input-icon"></i>
+            <input type="text" id="username" placeholder="Masukkan username" required>
+        </div>
+    </div>
+    
+    <div class="input-group">
+        <label for="password"><i class="fas fa-lock"></i> Password</label>
+        <div class="input-with-icon">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" id="password" placeholder="Masukkan password" required>
+            <button type="button" class="password-toggle" id="togglePassword">
+                <i class="fas fa-eye"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="shift-info">
+        <h3><i class="fas fa-clock"></i> Informasi Shift</h3>
+        <p id="shiftTimeDisplay">Shift Anda: -</p>
+        <p>Waktu login: 2 jam setelah shift dimulai</p>
+    </div>
+    
+    <div class="form-actions">
+        <button id="loginBtn" class="btn-primary">
+            <i class="fas fa-sign-in-alt"></i> Masuk
+        </button>
+        <button type="button" class="btn-secondary" id="demoLoginBtn">
+            <i class="fas fa-user-secret"></i> Login Demo
+        </button>
+    </div>
+    
+    <div class="time-display" id="currentTime">
+        <i class="fas fa-clock"></i> Loading...
+    </div>
+</div>
                 
                 <div class="ocean-background">
                     <div class="wave"></div>
@@ -196,3 +210,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
