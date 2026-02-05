@@ -3,224 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Permission System - Galactic Control</title>
+    <title>Aplikasi Izin Staff - Login</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Background Elements -->
-    <div id="stars"></div>
-    <div id="stars2"></div>
-    <div id="stars3"></div>
-    <div class="planet planet-1"></div>
-    <div class="planet planet-2"></div>
-    <div class="planet planet-3"></div>
-    
-    <!-- Main Container -->
     <div class="container">
         <!-- Login Screen -->
-        <div id="login-screen" class="screen active">
+        <div id="loginScreen" class="screen active">
             <div class="login-container">
-                <div class="logo">
-                    <i class="fas fa-user-astronaut"></i>
-                    <h1>GALACTIC STAFF CONTROL</h1>
-                    <p>Space-Themed Permission System</p>
+                <div class="logo-area">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3067/3067256.png" alt="Logo Perusahaan" class="logo" id="customLogo">
+                    <h1><i class="fas fa-water"></i> Ocean Staff Portal</h1>
+                    <p class="tagline">Sistem Manajemen Izin Karyawan</p>
                 </div>
                 
                 <div class="login-form">
-                    <h2><i class="fas fa-rocket"></i> LOGIN STAFF</h2>
+                    <h2><i class="fas fa-sign-in-alt"></i> Masuk ke Akun</h2>
+                    
                     <div class="input-group">
-                        <i class="fas fa-user"></i>
-                        <input type="text" id="username" placeholder="Username" autocomplete="off">
+                        <label for="username"><i class="fas fa-user"></i> Username</label>
+                        <input type="text" id="username" placeholder="Masukkan username">
                     </div>
+                    
                     <div class="input-group">
-                        <i class="fas fa-key"></i>
-                        <input type="password" id="password" placeholder="Password">
+                        <label for="password"><i class="fas fa-lock"></i> Password</label>
+                        <input type="password" id="password" placeholder="Masukkan password">
                     </div>
+                    
                     <div class="shift-info">
-                        <i class="fas fa-clock"></i>
-                        <span>Shift Login: 2 jam dari waktu shift</span>
+                        <h3><i class="fas fa-clock"></i> Informasi Shift</h3>
+                        <p id="shiftTimeDisplay">Shift Anda: -</p>
+                        <p>Waktu login: 2 jam setelah shift dimulai</p>
                     </div>
-                    <button id="login-btn" class="btn-primary">
-                        <i class="fas fa-sign-in-alt"></i> LAUNCH LOGIN
+                    
+                    <button id="loginBtn" class="btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Masuk
                     </button>
+                    
+                    <div class="time-display" id="currentTime">
+                        <i class="fas fa-clock"></i> Loading...
+                    </div>
                 </div>
                 
-                <div class="system-info">
-                    <div class="info-card">
-                        <i class="fas fa-stopwatch"></i>
-                        <h3>4x Izin 15 menit</h3>
-                    </div>
-                    <div class="info-card">
-                        <i class="fas fa-utensils"></i>
-                        <h3>3x Makan 7 menit</h3>
-                    </div>
-                    <div class="info-card">
-                        <i class="fas fa-user-clock"></i>
-                        <h3>1 Jobdesk Aktif</h3>
-                    </div>
+                <div class="ocean-background">
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
                 </div>
             </div>
         </div>
-
+        
         <!-- Dashboard Screen -->
-        <div id="dashboard-screen" class="screen">
-            <!-- Header -->
-            <header class="dashboard-header">
-                <div class="header-left">
-                    <h1><i class="fas fa-satellite"></i> STAFF CONTROL CENTER</h1>
-                    <div class="digital-clock">
-                        <i class="fas fa-clock"></i>
-                        <span id="live-clock">00:00:00</span>
+        <div id="dashboardScreen" class="screen">
+            <div class="dashboard-container">
+                <!-- Header -->
+                <header class="dashboard-header">
+                    <div class="header-left">
+                        <img src="https://cdn-icons-png.flaticon.com/512/3067/3067256.png" alt="Logo" class="dashboard-logo">
+                        <h1><i class="fas fa-water"></i> Ocean Staff Portal</h1>
                     </div>
-                </div>
-                <div class="header-right">
-                    <div class="staff-info">
-                        <i class="fas fa-user-astronaut"></i>
-                        <span id="staff-name">Staff Name</span>
-                    </div>
-                    <button id="logout-btn" class="btn-secondary">
-                        <i class="fas fa-sign-out-alt"></i> LOGOUT
-                    </button>
-                </div>
-            </header>
-
-            <main class="dashboard-content">
-                <!-- Left Panel - Permission Controls -->
-                <div class="left-panel">
-                    <!-- Permission Quota -->
-                    <div class="quota-card">
-                        <h2><i class="fas fa-chart-pie"></i> KUOTA IZIN</h2>
-                        <div class="quota-grid">
-                            <div class="quota-item">
-                                <div class="quota-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-                                    <i class="fas fa-stopwatch"></i>
-                                </div>
-                                <div class="quota-details">
-                                    <h3>Izin Regular</h3>
-                                    <div class="progress-bar">
-                                        <div class="progress" id="regular-progress" style="width: 0%"></div>
-                                    </div>
-                                    <p><span id="regular-used">0</span>/4 tersisa</p>
-                                </div>
-                            </div>
-                            <div class="quota-item">
-                                <div class="quota-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
-                                    <i class="fas fa-utensils"></i>
-                                </div>
-                                <div class="quota-details">
-                                    <h3>Izin Makan</h3>
-                                    <div class="progress-bar">
-                                        <div class="progress" id="meal-progress" style="width: 0%"></div>
-                                    </div>
-                                    <p><span id="meal-used">0</span>/3 tersisa</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Permission Form -->
-                    <div class="permission-form-card">
-                        <h2><i class="fas fa-paper-plane"></i> AJUKAN IZIN</h2>
-                        <div class="form-group">
-                            <label><i class="fas fa-tasks"></i> Jobdesk</label>
-                            <select id="jobdesk-select">
-                                <option value="">Pilih Jobdesk</option>
-                                <option value="cashier">Cashier</option>
-                                <option value="kitchen">Kitchen</option>
-                                <option value="service">Customer Service</option>
-                                <option value="stock">Stock Management</option>
-                                <option value="cleaning">Cleaning</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label><i class="fas fa-hourglass-half"></i> Jenis Izin</label>
-                            <div class="permission-buttons">
-                                <button class="permission-btn" data-type="regular" data-duration="15">
-                                    <i class="fas fa-stopwatch"></i>
-                                    <span>Izin 15 menit</span>
-                                    <small>(Tersisa: <span id="regular-left">4</span>)</small>
-                                </button>
-                                <button class="permission-btn" data-type="meal" data-duration="7">
-                                    <i class="fas fa-utensils"></i>
-                                    <span>Izin Makan 7 menit</span>
-                                    <small>(Tersisa: <span id="meal-left">3</span>)</small>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label><i class="fas fa-comment-alt"></i> Keterangan</label>
-                            <textarea id="permission-note" placeholder="Tambahkan keterangan izin..." rows="3"></textarea>
-                        </div>
-                        
-                        <button id="submit-permission" class="btn-primary">
-                            <i class="fas fa-paper-plane"></i> KIRIM PERMISSION REQUEST
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Right Panel - Status & History -->
-                <div class="right-panel">
-                    <!-- Active Permissions -->
-                    <div class="status-card">
-                        <h2><i class="fas fa-user-clock"></i> STAFF SEDANG IZIN</h2>
-                        <div class="active-staff-list" id="active-staff-list">
-                            <!-- Data akan diisi oleh JavaScript -->
-                        </div>
-                    </div>
-
-                    <!-- Permission History -->
-                    <div class="history-card">
-                        <h2><i class="fas fa-history"></i> HISTORY IZIN</h2>
-                        <div class="history-controls">
-                            <input type="date" id="history-date" value="<?php echo date('Y-m-d'); ?>">
-                            <button id="refresh-history" class="btn-icon">
-                                <i class="fas fa-sync-alt"></i>
+                    <div class="header-right">
+                        <div class="user-info">
+                            <span id="loggedInUser">Staff</span>
+                            <button id="logoutBtn" class="btn-secondary">
+                                <i class="fas fa-sign-out-alt"></i> Keluar
                             </button>
                         </div>
-                        <div class="history-list" id="history-list">
-                            <!-- Data akan diisi oleh JavaScript -->
+                        <div class="current-time" id="dashboardTime">
+                            <i class="fas fa-clock"></i> Loading...
                         </div>
                     </div>
-                </div>
-            </main>
-
-            <!-- Current Permission Timer -->
-            <div class="timer-overlay" id="timer-overlay">
-                <div class="timer-card">
-                    <h2><i class="fas fa-hourglass-end"></i> IZIN AKTIF</h2>
-                    <div class="timer-display">
-                        <div class="time-circle">
-                            <svg width="200" height="200">
-                                <circle class="timer-circle-bg" cx="100" cy="100" r="90"></circle>
-                                <circle class="timer-circle" cx="100" cy="100" r="90"></circle>
-                            </svg>
-                            <div class="time-text">
-                                <span id="timer-minutes">00</span>:<span id="timer-seconds">00</span>
+                </header>
+                
+                <div class="dashboard-content">
+                    <!-- Left Panel: User Info & Permission -->
+                    <div class="left-panel">
+                        <div class="user-card">
+                            <div class="user-avatar">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <h2 id="staffName">Nama Staff</h2>
+                            <p id="staffJobDesk">Jobdesk: -</p>
+                            <p id="staffShift">Shift: -</p>
+                            
+                            <div class="permission-quota">
+                                <h3><i class="fas fa-ticket-alt"></i> Jatah Izin Hari Ini</h3>
+                                <div class="quota-display">
+                                    <div class="quota-item">
+                                        <span class="quota-type">Izin 15 menit</span>
+                                        <div class="quota-counter">
+                                            <span id="quota15Min">4</span>/4
+                                        </div>
+                                    </div>
+                                    <div class="quota-item">
+                                        <span class="quota-type">Izin Makan 7 menit</span>
+                                        <div class="quota-counter">
+                                            <span id="quota7Min">3</span>/3
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="permission-action">
+                            <h3><i class="fas fa-walking"></i> Ajukan Izin</h3>
+                            <div class="permission-type-selector">
+                                <div class="permission-type" data-type="15min">
+                                    <i class="fas fa-coffee"></i>
+                                    <span>Izin 15 Menit</span>
+                                    <small>Sisa: <span id="remaining15">4</span></small>
+                                </div>
+                                <div class="permission-type" data-type="7min">
+                                    <i class="fas fa-utensils"></i>
+                                    <span>Izin Makan 7 Menit</span>
+                                    <small>Sisa: <span id="remaining7">3</span></small>
+                                </div>
+                            </div>
+                            
+                            <div class="permission-form">
+                                <div class="input-group">
+                                    <label for="permissionReason"><i class="fas fa-comment"></i> Keterangan</label>
+                                    <textarea id="permissionReason" placeholder="Alasan izin..." rows="3"></textarea>
+                                </div>
+                                
+                                <button id="requestPermissionBtn" class="btn-primary">
+                                    <i class="fas fa-paper-plane"></i> Ajukan Izin
+                                </button>
+                                
+                                <div class="active-permission" id="activePermissionInfo">
+                                    <!-- Info izin aktif akan muncul di sini -->
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="timer-info">
-                        <p><i class="fas fa-tasks"></i> Jobdesk: <span id="timer-jobdesk">-</span></p>
-                        <p><i class="fas fa-clock"></i> Sisa Waktu: <span id="time-remaining">15:00</span></p>
+                    
+                    <!-- Right Panel: Active Permissions & History -->
+                    <div class="right-panel">
+                        <!-- Currently On Permission -->
+                        <div class="on-permission-section">
+                            <h2><i class="fas fa-users"></i> Staff Sedang Izin</h2>
+                            <div class="staff-list" id="onPermissionList">
+                                <div class="empty-state">
+                                    <i class="fas fa-user-slash"></i>
+                                    <p>Tidak ada staff yang sedang izin</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Permission History -->
+                        <div class="history-section">
+                            <h2><i class="fas fa-history"></i> Riwayat Izin Anda</h2>
+                            <div class="history-list" id="permissionHistory">
+                                <div class="empty-state">
+                                    <i class="fas fa-history"></i>
+                                    <p>Belum ada riwayat izin</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <button id="end-permission" class="btn-danger">
-                        <i class="fas fa-stop"></i> AKHIRI IZIN
-                    </button>
+                </div>
+                
+                <!-- Animation Area (for sleeping animation) -->
+                <div class="animation-area">
+                    <div class="sleeping-animation" id="sleepingAnimation">
+                        <!-- Sleeping animation will appear here -->
+                    </div>
+                </div>
+                
+                <!-- Background elements -->
+                <div class="ocean-background-dashboard">
+                    <div class="fish fish1"></div>
+                    <div class="fish fish2"></div>
+                    <div class="fish fish3"></div>
+                    <div class="bubble bubble1"></div>
+                    <div class="bubble bubble2"></div>
+                    <div class="bubble bubble3"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Notification System -->
-    <div id="notification-container"></div>
+    <div id="notification" class="notification">
+        <div class="notification-content">
+            <span id="notificationText"></span>
+            <button class="notification-close">&times;</button>
+        </div>
+    </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/locale/id.min.js"></script>
+    <script src="database.js"></script>
     <script src="script.js"></script>
-    <script src="assets/stars-bg.js"></script>
 </body>
 </html>
