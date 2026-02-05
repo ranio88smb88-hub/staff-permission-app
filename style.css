@@ -157,6 +157,129 @@ body {
     font-size: 1rem;
 }
 
+/* Input Field Styles */
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 15px;
+    color: var(--ocean-light);
+    z-index: 2;
+}
+
+.input-with-icon input {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    border: 2px solid var(--ocean-lighter);
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: var(--font-primary);
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+    outline: none;
+    cursor: text;
+}
+
+.input-with-icon input:focus {
+    border-color: var(--sea-green);
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2);
+    background: white;
+}
+
+.input-with-icon input:hover {
+    border-color: var(--ocean-light);
+}
+
+/* Password Toggle Button */
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    background: none;
+    border: none;
+    color: var(--ocean-light);
+    cursor: pointer;
+    padding: 5px;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+.password-toggle:hover {
+    color: var(--ocean-deep);
+}
+
+/* Placeholder Styling */
+::placeholder {
+    color: var(--gray-medium);
+    opacity: 0.7;
+}
+
+/* Focus State for Accessibility */
+.input-with-icon input:focus-visible {
+    outline: 2px solid var(--ocean-deep);
+    outline-offset: 2px;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.form-actions button {
+    flex: 1;
+}
+
+/* Demo Login Button */
+#demoLoginBtn {
+    background: linear-gradient(135deg, var(--sea-green) 0%, #36d1dc 100%);
+    color: white;
+}
+
+#demoLoginBtn:hover {
+    background: linear-gradient(135deg, #36d1dc 0%, var(--sea-green) 100%);
+}
+
+/* Invalid Input State */
+.input-with-icon input:invalid:not(:focus):not(:placeholder-shown) {
+    border-color: var(--danger);
+    background: rgba(231, 76, 60, 0.05);
+}
+
+/* Valid Input State */
+.input-with-icon input:valid:not(:focus):not(:placeholder-shown) {
+    border-color: var(--success);
+    background: rgba(46, 204, 113, 0.05);
+}
+
+/* Loading State for Inputs */
+.input-with-icon input:disabled {
+    background: var(--gray-light);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Auto-fill Styling */
+.input-with-icon input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: var(--text-dark) !important;
+}
+
+/* Animation for Input Focus */
+@keyframes inputFocus {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.input-with-icon input:focus {
+    animation: inputFocus 0.3s ease;
+}
+
 /* Buttons */
 .btn-primary, .btn-secondary {
     padding: 12px 25px;
@@ -704,4 +827,5 @@ body {
         display: none;
     }
 }
+
 
