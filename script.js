@@ -491,7 +491,182 @@ class StaffPermissionApp {
     }
 }
 
-// Initialize the application when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    window.staffApp = new StaffPermissionApp();
+// Tambahkan di dalam class StaffPermissionApp atau di awal file
+
+// Toggle password visibility
+function setupPasswordToggle() {
+    const toggleBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    
+    if (toggleBtn && passwordInput) {
+        toggleBtn.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle icon
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
+    }
+}
+
+// Auto-focus username field
+function autoFocusUsername() {
+    const usernameInput = document.getElementById('username');
+    if (usernameInput && document.getElementById('loginScreen').classList.contains('active')) {
+        setTimeout(() => {
+            usernameInput.focus();
+        }, 300);
+    }
+}
+
+// Demo login functionality
+function setupDemoLogin() {
+    const demoBtn = document.getElementById('demoLoginBtn');
+    
+    if (demoBtn) {
+        demoBtn.addEventListener('click', function() {
+            // Fill with demo credentials
+            document.getElementById('username').value = 'staff1';
+            document.getElementById('password').value = 'staff123';
+            
+            // Show notification
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = 'Kredensial demo telah diisi. Klik "Masuk" untuk melanjutkan.';
+            notification.style.borderLeftColor = '#4ECDC4';
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+            
+            // Focus on password field
+            document.getElementById('password').focus();
+        });
+    }
+}
+
+// Input validation
+function setupInputValidation() {
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    
+    if (usernameInput) {
+        usernameInput.addEventListener('input', function() {
+            validateUsername(this.value);
+        });
+    }
+    
+    if (passwordInput) {
+        passwordInput.addEventListener('input', function() {
+            validatePassword(this.value);
+        });
+    }
+}
+
+function validateUsername(username) {
+    const inputElement = document.getElementById('username');
+    const parent = inputElement.closest('.input-with-icon');
+    
+    if (!parent) return;
+    
+    if (username.length > 0 && username.length < 3) {
+        parent.classList.add('invalid');
+        parent.classList.remove('valid');
+    } else if (username.length >= 3) {
+        parent.classList.add('valid');
+        parent.classList.remove('invalid');
+    } else {
+        parent.classList.remove('invalid', 'valid');
+    }
+}
+
+function validatePassword(password) {
+    const inputElement = document.getElementById('password');
+    const parent = inputElement.closest('.input-with-icon');
+    
+    if (!parent) return;
+    
+    if (password.length > 0 && password.length < 6) {
+        parent.classList.add('invalid');
+        parent.classList.remove('valid');
+    } else if (password.length >= 6) {
+        parent.classList.add('valid');
+        parent.classList.remove('invalid');
+    } else {
+        parent.classList.remove('invalid', 'valid');
+    }
+}
+
+// Tambahkan CSS untuk validasi
+const validationStyles = `
+.input-with-icon.invalid input {
+    border-color: #e74c3c;
+    background: rgba(231, 76, 60, 0.05);
+}
+
+.input-with-icon.valid input {
+    border-color: #2ecc71;
+    background: rgba(46, 204, 113, 0.05);
+}
+
+.input-with-icon.invalid::after {
+    content: '⚠';
+    position: absolute;
+    right: 45px;
+    color: #e74c3c;
+}
+
+.input-with-icon.valid::after {
+    content: '✓';
+    position: absolute;
+    right: 45px;
+    color: #2ecc71;
+}
+`;
+
+// Tambahkan stylesheet untuk validasi
+const styleSheet = document.createElement('style');
+styleSheet.textContent = validationStyles;
+document.head.appendChild(styleSheet);
+
+// Initialize semua fungsi input ketika aplikasi dimulai
+function initializeInputFeatures() {
+    setupPasswordToggle();
+    setupDemoLogin();
+    setupInputValidation();
+    
+    // Auto focus pada username ketika halaman login ditampilkan
+    const loginScreen = document.getElementById('loginScreen');
+    if (loginScreen && loginScreen.classList.contains('active')) {
+        autoFocusUsername();
+    }
+    
+    // Enter key untuk login
+    document.getElementById('password')?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('loginBtn').click();
+        }
+    });
+    
+    // Clear validation on blur
+    document.getElementById('username')?.addEventListener('blur', function() {
+        if (this.value === '') {
+            this.closest('.input-with-icon')?.classList.remove('invalid', 'valid');
+        }
+    });
+    
+    document.getElementById('password')?.addEventListener('blur', function() {
+        if (this.value === '') {
+            this.closest('.input-with-icon')?.classList.remove('invalid', 'valid');
+        }
+    });
+}
+
+// Panggil di DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+    initializeInputFeatures();
 });
