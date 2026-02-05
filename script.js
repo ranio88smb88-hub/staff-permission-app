@@ -93,7 +93,7 @@ class StaffPermissionSystem {
                     username: 'staff1',
                     password: 'staff123',
                     name: 'Ahmad Rizki',
-                    shift: '14:45',
+                    shift: '14:00',
                     quota: {
                         regular: 4,
                         meal: 3,
@@ -569,4 +569,5 @@ class StaffPermissionSystem {
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.staffSystem = new StaffPermissionSystem();
+
 });
