@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Izin Staff - Login</title>
+    <title>Aplikasi Izin Staff - Ocean Staff Portal</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Quicksand:wght@400;500;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -13,57 +14,73 @@
         <div id="loginScreen" class="screen active">
             <div class="login-container">
                 <div class="logo-area">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3067/3067256.png" alt="Logo Perusahaan" class="logo" id="customLogo">
+                    <img src="https://cdn-icons-png.flaticon.com/512/869/869869.png" alt="Logo Perusahaan" class="logo" id="customLogo">
                     <h1><i class="fas fa-water"></i> Ocean Staff Portal</h1>
                     <p class="tagline">Sistem Manajemen Izin Karyawan</p>
                 </div>
                 
                 <div class="login-form">
-    <h2><i class="fas fa-sign-in-alt"></i> Masuk ke Akun</h2>
-    
-    <div class="input-group">
-        <label for="username"><i class="fas fa-user"></i> Username</label>
-        <div class="input-with-icon">
-            <i class="fas fa-user input-icon"></i>
-            <input type="text" id="username" placeholder="Masukkan username" required>
-        </div>
-    </div>
-    
-    <div class="input-group">
-        <label for="password"><i class="fas fa-lock"></i> Password</label>
-        <div class="input-with-icon">
-            <i class="fas fa-lock input-icon"></i>
-            <input type="password" id="password" placeholder="Masukkan password" required>
-            <button type="button" class="password-toggle" id="togglePassword">
-                <i class="fas fa-eye"></i>
-            </button>
-        </div>
-    </div>
-    
-    <div class="shift-info">
-        <h3><i class="fas fa-clock"></i> Informasi Shift</h3>
-        <p id="shiftTimeDisplay">Shift Anda: -</p>
-        <p>Waktu login: 2 jam setelah shift dimulai</p>
-    </div>
-    
-    <div class="form-actions">
-        <button id="loginBtn" class="btn-primary">
-            <i class="fas fa-sign-in-alt"></i> Masuk
-        </button>
-        <button type="button" class="btn-secondary" id="demoLoginBtn">
-            <i class="fas fa-user-secret"></i> Login Demo
-        </button>
-    </div>
-    
-    <div class="time-display" id="currentTime">
-        <i class="fas fa-clock"></i> Loading...
-    </div>
-</div>
+                    <h2><i class="fas fa-sign-in-alt"></i> Masuk ke Akun</h2>
+                    
+                    <div class="input-group">
+                        <label for="username"><i class="fas fa-user"></i> Username</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="username" placeholder="Masukkan username" required>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="password"><i class="fas fa-lock"></i> Password</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="password" placeholder="Masukkan password" required>
+                            <button type="button" class="password-toggle" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="shift-info">
+                        <h3><i class="fas fa-clock"></i> Informasi Shift</h3>
+                        <p id="shiftTimeDisplay">Contoh: Shift 08:00 - 16:00, Login: 08:00 - 10:00</p>
+                        <p>Waktu login: 2 jam setelah shift dimulai</p>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button id="loginBtn" class="btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Masuk
+                        </button>
+                        <button type="button" class="btn-secondary" id="demoLoginBtn">
+                            <i class="fas fa-user-secret"></i> Login Demo
+                        </button>
+                    </div>
+                    
+                    <div class="login-footer">
+                        <p class="credentials-info">
+                            <small>
+                                <i class="fas fa-info-circle"></i> 
+                                Admin: <strong>csline</strong> / <strong>aa1234</strong> | 
+                                Staff: <strong>staff1</strong> / <strong>staff123</strong>
+                            </small>
+                        </p>
+                    </div>
+                    
+                    <div class="time-display" id="currentTime">
+                        <i class="fas fa-clock"></i> Loading...
+                    </div>
+                </div>
                 
                 <div class="ocean-background">
                     <div class="wave"></div>
                     <div class="wave"></div>
                     <div class="wave"></div>
+                    <div class="fish fish1"></div>
+                    <div class="fish fish2"></div>
+                    <div class="fish fish3"></div>
+                    <div class="bubble bubble1"></div>
+                    <div class="bubble bubble2"></div>
+                    <div class="bubble bubble3"></div>
                 </div>
             </div>
         </div>
@@ -74,7 +91,7 @@
                 <!-- Header -->
                 <header class="dashboard-header">
                     <div class="header-left">
-                        <img src="https://cdn-icons-png.flaticon.com/512/3067/3067256.png" alt="Logo" class="dashboard-logo">
+                        <img src="https://cdn-icons-png.flaticon.com/512/869/869869.png" alt="Logo" class="dashboard-logo">
                         <h1><i class="fas fa-water"></i> Ocean Staff Portal</h1>
                     </div>
                     <div class="header-right">
@@ -109,12 +126,14 @@
                                         <div class="quota-counter">
                                             <span id="quota15Min">4</span>/4
                                         </div>
+                                        <small>Sisa: <span id="remaining15">4</span></small>
                                     </div>
                                     <div class="quota-item">
                                         <span class="quota-type">Izin Makan 7 menit</span>
                                         <div class="quota-counter">
                                             <span id="quota7Min">3</span>/3
                                         </div>
+                                        <small>Sisa: <span id="remaining7">3</span></small>
                                     </div>
                                 </div>
                             </div>
@@ -126,12 +145,10 @@
                                 <div class="permission-type" data-type="15min">
                                     <i class="fas fa-coffee"></i>
                                     <span>Izin 15 Menit</span>
-                                    <small>Sisa: <span id="remaining15">4</span></small>
                                 </div>
                                 <div class="permission-type" data-type="7min">
                                     <i class="fas fa-utensils"></i>
                                     <span>Izin Makan 7 Menit</span>
-                                    <small>Sisa: <span id="remaining7">3</span></small>
                                 </div>
                             </div>
                             
@@ -210,4 +227,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
