@@ -44,6 +44,20 @@ class StaffPermissionDatabase {
                             '7min': 0
                         },
                         lastResetDate: this.getTodayDate()
+                    },
+                    {
+                        id: 3,
+                        username: 'staff3',
+                        password: 'staff123',
+                        name: 'Budi Santoso',
+                        jobdesk: 'Marketing',
+                        shiftStart: '10:00',
+                        shiftEnd: '18:00',
+                        permissionsToday: {
+                            '15min': 0,
+                            '7min': 0
+                        },
+                        lastResetDate: this.getTodayDate()
                     }
                 ],
                 
@@ -52,7 +66,7 @@ class StaffPermissionDatabase {
                     max15MinPermissions: 4,
                     max7MinPermissions: 3,
                     loginWindowHours: 2,
-                    systemLogo: 'https://cdn-icons-png.flaticon.com/512/3067/3067256.png',
+                    systemLogo: 'https://cdn-icons-png.flaticon.com/512/869/869869.png',
                     backgroundImage: '',
                     adminCode: 'ADMIN123'
                 },
@@ -88,7 +102,12 @@ class StaffPermissionDatabase {
         if (username === db.adminUser.username && password === db.adminUser.password) {
             return {
                 success: true,
-                user: { ...db.adminUser, name: 'Administrator' },
+                user: { 
+                    ...db.adminUser, 
+                    name: 'Administrator',
+                    id: 0,
+                    isAdmin: true
+                },
                 isAdmin: true
             };
         }
@@ -100,9 +119,10 @@ class StaffPermissionDatabase {
         
         if (staff) {
             // Reset quota jika hari berbeda
-            if (staff.lastResetDate !== this.getTodayDate()) {
+            const today = this.getTodayDate();
+            if (staff.lastResetDate !== today) {
                 staff.permissionsToday = { '15min': 0, '7min': 0 };
-                staff.lastResetDate = this.getTodayDate();
+                staff.lastResetDate = today;
                 this.updateDatabase(db);
             }
             
@@ -125,10 +145,19 @@ class StaffPermissionDatabase {
             return { success: false, message: 'Staff tidak ditemukan' };
         }
         
+        // Cek apakah staff sudah memiliki izin aktif
+        const hasActivePermission = db.activePermissions.some(ap => ap.staffId === staffId);
+        if (hasActivePermission) {
+            return { 
+                success: false, 
+                message: 'Anda sudah memiliki izin aktif' 
+            };
+        }
+        
         // Cek apakah staff sudah memiliki izin aktif dengan jobdesk yang sama
         const activeWithSameJobdesk = db.activePermissions.find(ap => {
             const staffMember = db.staff.find(s => s.id === ap.staffId);
-            return staffMember && staffMember.jobdesk === staff.jobdesk && ap.staffId !== staffId;
+            return staffMember && staffMember.jobdesk === staff.jobdesk;
         });
         
         if (activeWithSameJobdesk) {
@@ -142,7 +171,8 @@ class StaffPermissionDatabase {
         const maxPermission = permissionType === '15min' ? 
             db.settings.max15MinPermissions : db.settings.max7MinPermissions;
         
-        if (staff.permissionsToday[permissionType] >= maxPermission) {
+        const usedPermissions = staff.permissionsToday[permissionType] || 0;
+        if (usedPermissions >= maxPermission) {
             return { 
                 success: false, 
                 message: `Kuota izin ${permissionType === '15min' ? '15 menit' : '7 menit'} sudah habis` 
@@ -165,7 +195,7 @@ class StaffPermissionDatabase {
         db.activePermissions.push(permission);
         
         // Update kuota staff
-        staff.permissionsToday[permissionType]++;
+        staff.permissionsToday[permissionType] = (staff.permissionsToday[permissionType] || 0) + 1;
         
         // Tambah ke riwayat
         db.permissionsHistory.push({
@@ -247,7 +277,7 @@ class StaffPermissionDatabase {
         return db.permissionsHistory
             .filter(h => h.staffId === staffId)
             .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
-            .slice(0, 10); // Ambil 10 terakhir
+            .slice(0, 10);
     }
 
     getAllStaff() {
@@ -275,7 +305,12 @@ class StaffPermissionDatabase {
         
         const newStaff = {
             id: newId,
-            ...staffData,
+            username: staffData.username || `staff${newId}`,
+            password: staffData.password || 'staff123',
+            name: staffData.name || `Staff ${newId}`,
+            jobdesk: staffData.jobdesk || 'Staff',
+            shiftStart: staffData.shiftStart || '08:00',
+            shiftEnd: staffData.shiftEnd || '16:00',
             permissionsToday: { '15min': 0, '7min': 0 },
             lastResetDate: this.getTodayDate()
         };
@@ -283,7 +318,7 @@ class StaffPermissionDatabase {
         db.staff.push(newStaff);
         this.updateDatabase(db);
         
-        return { success: true, message: 'Staff berhasil ditambahkan' };
+        return { success: true, message: 'Staff berhasil ditambahkan', staff: newStaff };
     }
 
     updateStaff(staffId, staffData) {
@@ -294,7 +329,17 @@ class StaffPermissionDatabase {
             return { success: false, message: 'Staff tidak ditemukan' };
         }
         
-        db.staff[staffIndex] = { ...db.staff[staffIndex], ...staffData };
+        // Update hanya field yang diberikan
+        const updatedStaff = { ...db.staff[staffIndex] };
+        
+        if (staffData.name) updatedStaff.name = staffData.name;
+        if (staffData.username) updatedStaff.username = staffData.username;
+        if (staffData.password) updatedStaff.password = staffData.password;
+        if (staffData.jobdesk) updatedStaff.jobdesk = staffData.jobdesk;
+        if (staffData.shiftStart) updatedStaff.shiftStart = staffData.shiftStart;
+        if (staffData.shiftEnd) updatedStaff.shiftEnd = staffData.shiftEnd;
+        
+        db.staff[staffIndex] = updatedStaff;
         this.updateDatabase(db);
         
         return { success: true, message: 'Staff berhasil diperbarui' };
@@ -303,6 +348,12 @@ class StaffPermissionDatabase {
     deleteStaff(staffId) {
         const db = this.getDatabase();
         const initialLength = db.staff.length;
+        
+        // Jangan hapus staff yang masih memiliki izin aktif
+        const hasActivePermission = db.activePermissions.some(ap => ap.staffId === staffId);
+        if (hasActivePermission) {
+            return { success: false, message: 'Tidak dapat menghapus staff yang sedang izin' };
+        }
         
         db.staff = db.staff.filter(s => s.id !== staffId);
         
