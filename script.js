@@ -3,18 +3,26 @@ class StaffPermissionApp {
     constructor() {
         this.db = database;
         this.currentUser = null;
-        this.currentPermissionType = null;
+        this.currentPermissionType = '15min'; // Default
         this.currentTimeInterval = null;
         this.activePermissionCheckInterval = null;
+        this.activePermissionTimer = null;
         
+        this.initializeApp();
+    }
+
+    initializeApp() {
         this.initializeEventListeners();
         this.updateTimeDisplay();
         this.checkLoginStatus();
+        this.initializeInputFeatures();
     }
 
     initializeEventListeners() {
         // Login
         document.getElementById('loginBtn')?.addEventListener('click', () => this.handleLogin());
+        
+        // Enter key untuk login
         document.getElementById('password')?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.handleLogin();
         });
@@ -34,6 +42,41 @@ class StaffPermissionApp {
         document.querySelector('.notification-close')?.addEventListener('click', () => {
             this.hideNotification();
         });
+    }
+
+    initializeInputFeatures() {
+        // Password toggle
+        const toggleBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        
+        if (toggleBtn && passwordInput) {
+            toggleBtn.addEventListener('click', () => {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                const icon = toggleBtn.querySelector('i');
+                icon.classList.toggle('fa-eye');
+                icon.classList.toggle('fa-eye-slash');
+            });
+        }
+        
+        // Demo login
+        const demoBtn = document.getElementById('demoLoginBtn');
+        if (demoBtn) {
+            demoBtn.addEventListener('click', () => {
+                document.getElementById('username').value = 'staff1';
+                document.getElementById('password').value = 'staff123';
+                this.showNotification('Kredensial demo telah diisi. Klik "Masuk" untuk melanjutkan.', 'info');
+                document.getElementById('password').focus();
+            });
+        }
+        
+        // Auto focus pada username
+        if (document.getElementById('loginScreen')?.classList.contains('active')) {
+            setTimeout(() => {
+                document.getElementById('username')?.focus();
+            }, 300);
+        }
     }
 
     checkLoginStatus() {
@@ -72,7 +115,7 @@ class StaffPermissionApp {
     }
 
     handleLogin() {
-        const username = document.getElementById('username').value;
+        const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
         
         if (!username || !password) {
@@ -121,6 +164,10 @@ class StaffPermissionApp {
             clearInterval(this.activePermissionCheckInterval);
         }
         
+        if (this.activePermissionTimer) {
+            clearInterval(this.activePermissionTimer);
+        }
+        
         this.showLoginScreen();
         this.showNotification('Anda telah logout', 'info');
     }
@@ -129,8 +176,17 @@ class StaffPermissionApp {
         document.getElementById('loginScreen').classList.add('active');
         document.getElementById('dashboardScreen').classList.remove('active');
         
+        // Clear input fields
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        
         // Update shift info display
         this.updateShiftInfoDisplay();
+        
+        // Auto focus username
+        setTimeout(() => {
+            document.getElementById('username').focus();
+        }, 300);
     }
 
     showDashboard() {
@@ -141,25 +197,29 @@ class StaffPermissionApp {
         this.startDashboardTimers();
         
         // Set initial permission type
-        this.selectPermissionType(document.querySelector('.permission-type'));
+        const firstPermissionType = document.querySelector('.permission-type');
+        if (firstPermissionType) {
+            this.selectPermissionType(firstPermissionType);
+        }
     }
 
     updateShiftInfoDisplay() {
         const shiftDisplay = document.getElementById('shiftTimeDisplay');
         const db = this.db.getDatabase();
         
-        // Menampilkan contoh shift untuk informasi
         if (db.staff.length > 0) {
             const sampleShift = db.staff[0];
-            shiftDisplay.textContent = `Contoh: Shift ${sampleShift.shiftStart} - ${sampleShift.shiftEnd}, Login: ${sampleShift.shiftStart} - ${this.addHours(sampleShift.shiftStart, 2)}`;
+            const loginEnd = this.addHours(sampleShift.shiftStart, 2);
+            shiftDisplay.textContent = `Contoh: Shift ${sampleShift.shiftStart} - ${sampleShift.shiftEnd}, Login: ${sampleShift.shiftStart} - ${loginEnd}`;
         }
     }
 
     addHours(timeString, hours) {
         const [h, m] = timeString.split(':').map(Number);
-        const date = new Date();
-        date.setHours(h + hours, m);
-        return date.toTimeString().substring(0, 5);
+        const totalMinutes = h * 60 + m + hours * 60;
+        const newHours = Math.floor(totalMinutes / 60) % 24;
+        const newMinutes = totalMinutes % 60;
+        return `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
     }
 
     loadDashboardData() {
@@ -178,21 +238,29 @@ class StaffPermissionApp {
         
         // Update quota
         const settings = db.settings;
-        document.getElementById('quota15Min').textContent = 
-            `${settings.max15MinPermissions - staff.permissionsToday['15min']}`;
-        document.getElementById('quota7Min').textContent = 
-            `${settings.max7MinPermissions - staff.permissionsToday['7min']}`;
+        const remaining15 = settings.max15MinPermissions - (staff.permissionsToday['15min'] || 0);
+        const remaining7 = settings.max7MinPermissions - (staff.permissionsToday['7min'] || 0);
         
-        document.getElementById('remaining15').textContent = 
-            settings.max15MinPermissions - staff.permissionsToday['15min'];
-        document.getElementById('remaining7').textContent = 
-            settings.max7MinPermissions - staff.permissionsToday['7min'];
+        document.getElementById('quota15Min').textContent = 
+            `${remaining15}/${settings.max15MinPermissions}`;
+        document.getElementById('quota7Min').textContent = 
+            `${remaining7}/${settings.max7MinPermissions}`;
+        
+        document.getElementById('remaining15').textContent = remaining15;
+        document.getElementById('remaining7').textContent = remaining7;
         
         // Load active permissions
         this.loadActivePermissions();
         
         // Load history
         this.loadPermissionHistory();
+        
+        // Check if user has active permission
+        const activePermission = db.activePermissions.find(ap => ap.staffId === this.currentUser.id);
+        if (activePermission) {
+            this.showActivePermissionInfo(activePermission);
+            this.startSleepingAnimation();
+        }
     }
 
     selectPermissionType(element) {
@@ -250,52 +318,46 @@ class StaffPermissionApp {
         const activePermissionInfo = document.getElementById('activePermissionInfo');
         const startTime = new Date(permission.startTime);
         const endTime = new Date(startTime.getTime() + permission.duration * 60000);
-        const now = new Date();
-        const timeLeft = Math.max(0, Math.floor((endTime - now) / 1000));
         
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-        
-        activePermissionInfo.innerHTML = `
-            <h4><i class="fas fa-running"></i> Izin Aktif</h4>
-            <p><strong>Jenis:</strong> ${permission.type === '15min' ? '15 menit' : 'Makan 7 menit'}</p>
-            <p><strong>Alasan:</strong> ${permission.reason}</p>
-            <p><strong>Sisa waktu:</strong> <span class="time-left">${minutes}:${seconds.toString().padStart(2, '0')}</span></p>
-            <button id="endPermissionBtn" class="btn-secondary" style="margin-top: 10px;">
-                <i class="fas fa-stop-circle"></i> Akhiri Izin
-            </button>
-        `;
-        
-        activePermissionInfo.style.display = 'block';
-        
-        // Add event listener to end permission button
-        document.getElementById('endPermissionBtn')?.addEventListener('click', () => {
-            this.endActivePermission(permission.id);
-        });
-        
-        // Start countdown timer
-        this.startPermissionCountdown(permission.id, endTime);
-    }
-
-    startPermissionCountdown(permissionId, endTime) {
-        const countdownInterval = setInterval(() => {
+        const updateTimer = () => {
             const now = new Date();
-            const timeLeft = endTime - now;
+            const timeLeft = Math.max(0, endTime - now);
             
             if (timeLeft <= 0) {
-                clearInterval(countdownInterval);
-                this.endActivePermission(permissionId, true);
+                this.endActivePermission(permission.id, true);
                 return;
             }
             
             const minutes = Math.floor(timeLeft / 60000);
             const seconds = Math.floor((timeLeft % 60000) / 1000);
             
-            const timeLeftElement = document.querySelector('.time-left');
-            if (timeLeftElement) {
-                timeLeftElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            activePermissionInfo.innerHTML = `
+                <h4><i class="fas fa-running"></i> Izin Aktif</h4>
+                <p><strong>Jenis:</strong> ${permission.type === '15min' ? '15 menit' : 'Makan 7 menit'}</p>
+                <p><strong>Alasan:</strong> ${permission.reason}</p>
+                <p><strong>Sisa waktu:</strong> <span class="time-left">${minutes}:${seconds.toString().padStart(2, '0')}</span></p>
+                <button id="endPermissionBtn" class="btn-secondary" style="margin-top: 10px;">
+                    <i class="fas fa-stop-circle"></i> Akhiri Izin
+                </button>
+            `;
+            
+            // Add event listener to end permission button
+            const endBtn = document.getElementById('endPermissionBtn');
+            if (endBtn) {
+                endBtn.addEventListener('click', () => {
+                    this.endActivePermission(permission.id);
+                });
             }
-        }, 1000);
+        };
+        
+        updateTimer();
+        activePermissionInfo.style.display = 'block';
+        
+        // Update timer every second
+        if (this.activePermissionTimer) {
+            clearInterval(this.activePermissionTimer);
+        }
+        this.activePermissionTimer = setInterval(updateTimer, 1000);
     }
 
     endActivePermission(permissionId, expired = false) {
@@ -306,6 +368,11 @@ class StaffPermissionApp {
             document.getElementById('activePermissionInfo').style.display = 'none';
             this.loadDashboardData();
             this.stopSleepingAnimation();
+            
+            if (this.activePermissionTimer) {
+                clearInterval(this.activePermissionTimer);
+                this.activePermissionTimer = null;
+            }
         }
     }
 
@@ -373,8 +440,9 @@ class StaffPermissionApp {
         
         history.forEach(record => {
             const startTime = new Date(record.startTime);
-            const endTime = record.endTime ? new Date(record.endTime) : null;
-            const duration = record.duration;
+            const typeText = record.type === '15min' ? 'Izin 15 menit' : 'Izin makan 7 menit';
+            const statusClass = record.status === 'completed' ? 'status-completed' : 'status-active';
+            const statusText = record.status === 'completed' ? 'Selesai' : 'Aktif';
             
             const historyElement = document.createElement('div');
             historyElement.className = 'history-item';
@@ -384,13 +452,13 @@ class StaffPermissionApp {
                         <i class="fas ${record.type === '15min' ? 'fa-coffee' : 'fa-utensils'}"></i>
                     </div>
                     <div class="history-details">
-                        <h4>${record.type === '15min' ? 'Izin 15 menit' : 'Izin makan 7 menit'}</h4>
+                        <h4>${typeText}</h4>
                         <p>${record.reason}</p>
                         <p><small>${startTime.toLocaleDateString('id-ID')} ${startTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}</small></p>
                     </div>
                 </div>
-                <div class="permission-status ${record.status === 'completed' ? 'status-completed' : 'status-active'}">
-                    ${record.status === 'completed' ? 'Selesai' : 'Aktif'}
+                <div class="permission-status ${statusClass}">
+                    ${statusText}
                 </div>
             `;
             
@@ -451,17 +519,6 @@ class StaffPermissionApp {
         this.activePermissionCheckInterval = setInterval(() => {
             this.db.checkExpiredPermissions();
             this.loadDashboardData();
-            
-            // Cek apakah user masih memiliki izin aktif
-            const db = this.db.getDatabase();
-            const hasActivePermission = db.activePermissions.some(ap => 
-                ap.staffId === this.currentUser?.id
-            );
-            
-            if (!hasActivePermission) {
-                document.getElementById('activePermissionInfo').style.display = 'none';
-                this.stopSleepingAnimation();
-            }
         }, 30000);
     }
 
@@ -491,182 +548,7 @@ class StaffPermissionApp {
     }
 }
 
-// Tambahkan di dalam class StaffPermissionApp atau di awal file
-
-// Toggle password visibility
-function setupPasswordToggle() {
-    const toggleBtn = document.getElementById('togglePassword');
-    const passwordInput = document.getElementById('password');
-    
-    if (toggleBtn && passwordInput) {
-        toggleBtn.addEventListener('click', function() {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            
-            // Toggle icon
-            const icon = this.querySelector('i');
-            icon.classList.toggle('fa-eye');
-            icon.classList.toggle('fa-eye-slash');
-        });
-    }
-}
-
-// Auto-focus username field
-function autoFocusUsername() {
-    const usernameInput = document.getElementById('username');
-    if (usernameInput && document.getElementById('loginScreen').classList.contains('active')) {
-        setTimeout(() => {
-            usernameInput.focus();
-        }, 300);
-    }
-}
-
-// Demo login functionality
-function setupDemoLogin() {
-    const demoBtn = document.getElementById('demoLoginBtn');
-    
-    if (demoBtn) {
-        demoBtn.addEventListener('click', function() {
-            // Fill with demo credentials
-            document.getElementById('username').value = 'staff1';
-            document.getElementById('password').value = 'staff123';
-            
-            // Show notification
-            const notification = document.getElementById('notification');
-            const notificationText = document.getElementById('notificationText');
-            
-            notificationText.textContent = 'Kredensial demo telah diisi. Klik "Masuk" untuk melanjutkan.';
-            notification.style.borderLeftColor = '#4ECDC4';
-            notification.style.display = 'block';
-            
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-            
-            // Focus on password field
-            document.getElementById('password').focus();
-        });
-    }
-}
-
-// Input validation
-function setupInputValidation() {
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
-    
-    if (usernameInput) {
-        usernameInput.addEventListener('input', function() {
-            validateUsername(this.value);
-        });
-    }
-    
-    if (passwordInput) {
-        passwordInput.addEventListener('input', function() {
-            validatePassword(this.value);
-        });
-    }
-}
-
-function validateUsername(username) {
-    const inputElement = document.getElementById('username');
-    const parent = inputElement.closest('.input-with-icon');
-    
-    if (!parent) return;
-    
-    if (username.length > 0 && username.length < 3) {
-        parent.classList.add('invalid');
-        parent.classList.remove('valid');
-    } else if (username.length >= 3) {
-        parent.classList.add('valid');
-        parent.classList.remove('invalid');
-    } else {
-        parent.classList.remove('invalid', 'valid');
-    }
-}
-
-function validatePassword(password) {
-    const inputElement = document.getElementById('password');
-    const parent = inputElement.closest('.input-with-icon');
-    
-    if (!parent) return;
-    
-    if (password.length > 0 && password.length < 6) {
-        parent.classList.add('invalid');
-        parent.classList.remove('valid');
-    } else if (password.length >= 6) {
-        parent.classList.add('valid');
-        parent.classList.remove('invalid');
-    } else {
-        parent.classList.remove('invalid', 'valid');
-    }
-}
-
-// Tambahkan CSS untuk validasi
-const validationStyles = `
-.input-with-icon.invalid input {
-    border-color: #e74c3c;
-    background: rgba(231, 76, 60, 0.05);
-}
-
-.input-with-icon.valid input {
-    border-color: #2ecc71;
-    background: rgba(46, 204, 113, 0.05);
-}
-
-.input-with-icon.invalid::after {
-    content: '⚠';
-    position: absolute;
-    right: 45px;
-    color: #e74c3c;
-}
-
-.input-with-icon.valid::after {
-    content: '✓';
-    position: absolute;
-    right: 45px;
-    color: #2ecc71;
-}
-`;
-
-// Tambahkan stylesheet untuk validasi
-const styleSheet = document.createElement('style');
-styleSheet.textContent = validationStyles;
-document.head.appendChild(styleSheet);
-
-// Initialize semua fungsi input ketika aplikasi dimulai
-function initializeInputFeatures() {
-    setupPasswordToggle();
-    setupDemoLogin();
-    setupInputValidation();
-    
-    // Auto focus pada username ketika halaman login ditampilkan
-    const loginScreen = document.getElementById('loginScreen');
-    if (loginScreen && loginScreen.classList.contains('active')) {
-        autoFocusUsername();
-    }
-    
-    // Enter key untuk login
-    document.getElementById('password')?.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            document.getElementById('loginBtn').click();
-        }
-    });
-    
-    // Clear validation on blur
-    document.getElementById('username')?.addEventListener('blur', function() {
-        if (this.value === '') {
-            this.closest('.input-with-icon')?.classList.remove('invalid', 'valid');
-        }
-    });
-    
-    document.getElementById('password')?.addEventListener('blur', function() {
-        if (this.value === '') {
-            this.closest('.input-with-icon')?.classList.remove('invalid', 'valid');
-        }
-    });
-}
-
-// Panggil di DOMContentLoaded
-document.addEventListener('DOMContentLoaded', function() {
-    initializeInputFeatures();
+// Initialize the application when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    window.staffApp = new StaffPermissionApp();
 });
