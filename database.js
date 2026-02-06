@@ -23,8 +23,8 @@ class StaffPermissionDatabase {
                         password: 'staff123',
                         name: 'Andi Wijaya',
                         jobdesk: 'Customer Service',
-                        shiftStart: '08:00',
-                        shiftEnd: '16:00',
+                        shiftStart: '02:00',
+                        shiftEnd: '12:00',
                         permissionsToday: {
                             '15min': 0,
                             '7min': 0
@@ -368,3 +368,4 @@ class StaffPermissionDatabase {
 
 // Initialize database instance
 const database = new StaffPermissionDatabase();
+
