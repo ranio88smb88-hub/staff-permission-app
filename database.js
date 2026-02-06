@@ -5,17 +5,14 @@ class StaffPermissionDatabase {
     }
 
     initializeDatabase() {
-        // Inisialisasi data jika belum ada
         if (!localStorage.getItem('staffPermissionSystem')) {
             const initialData = {
-                // User admin default
                 adminUser: {
                     username: 'csline',
                     password: 'aa1234',
                     isAdmin: true
                 },
                 
-                // Daftar staff default
                 staff: [
                     {
                         id: 1,
@@ -23,12 +20,9 @@ class StaffPermissionDatabase {
                         password: 'staff123',
                         name: 'Andi Wijaya',
                         jobdesk: 'Customer Service',
-                        shiftStart: '02:00',
-                        shiftEnd: '12:00',
-                        permissionsToday: {
-                            '15min': 0,
-                            '7min': 0
-                        },
+                        shiftStart: '08:00',
+                        shiftEnd: '16:00',
+                        permissionsToday: { '15min': 0, '7min': 0 },
                         lastResetDate: this.getTodayDate()
                     },
                     {
@@ -37,12 +31,9 @@ class StaffPermissionDatabase {
                         password: 'staff123',
                         name: 'Siti Rahayu',
                         jobdesk: 'Admin',
-                        shiftStart: '02:00',
-                        shiftEnd: '12:00',
-                        permissionsToday: {
-                            '15min': 0,
-                            '7min': 0
-                        },
+                        shiftStart: '14:00',
+                        shiftEnd: '22:00',
+                        permissionsToday: { '15min': 0, '7min': 0 },
                         lastResetDate: this.getTodayDate()
                     },
                     {
@@ -53,15 +44,11 @@ class StaffPermissionDatabase {
                         jobdesk: 'Marketing',
                         shiftStart: '10:00',
                         shiftEnd: '18:00',
-                        permissionsToday: {
-                            '15min': 0,
-                            '7min': 0
-                        },
+                        permissionsToday: { '15min': 0, '7min': 0 },
                         lastResetDate: this.getTodayDate()
                     }
                 ],
                 
-                // Pengaturan sistem
                 settings: {
                     max15MinPermissions: 4,
                     max7MinPermissions: 3,
@@ -71,10 +58,7 @@ class StaffPermissionDatabase {
                     adminCode: 'ADMIN123'
                 },
                 
-                // Riwayat izin
                 permissionsHistory: [],
-                
-                // Izin aktif
                 activePermissions: []
             };
             
@@ -329,7 +313,6 @@ class StaffPermissionDatabase {
             return { success: false, message: 'Staff tidak ditemukan' };
         }
         
-        // Update hanya field yang diberikan
         const updatedStaff = { ...db.staff[staffIndex] };
         
         if (staffData.name) updatedStaff.name = staffData.name;
@@ -368,5 +351,3 @@ class StaffPermissionDatabase {
 
 // Initialize database instance
 const database = new StaffPermissionDatabase();
-
-
