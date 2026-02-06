@@ -2,14 +2,12 @@
 class AdminPanel {
     constructor() {
         this.db = database;
+        this.checkAdminAccess();
         this.initializeEventListeners();
         this.loadSettings();
         this.loadStaffData();
         this.loadHistoryData();
         this.loadDisplaySettings();
-        
-        // Check if user is admin
-        this.checkAdminAccess();
     }
 
     checkAdminAccess() {
@@ -22,6 +20,8 @@ class AdminPanel {
         const user = JSON.parse(savedUser);
         if (!user.isAdmin) {
             window.location.href = 'index.html';
+        } else {
+            document.getElementById('adminName').textContent = user.name;
         }
     }
 
@@ -55,6 +55,7 @@ class AdminPanel {
 
         // History filter
         document.getElementById('filterHistoryBtn').addEventListener('click', () => this.loadHistoryData());
+        document.getElementById('exportHistoryBtn').addEventListener('click', () => this.exportHistory());
 
         // Display settings
         document.getElementById('saveDisplaySettingsBtn').addEventListener('click', () => this.saveDisplaySettings());
@@ -64,6 +65,29 @@ class AdminPanel {
         // Notification close
         document.querySelector('.notification-close').addEventListener('click', () => {
             this.hideNotification();
+        });
+        
+        // Initialize input fields
+        this.initializeInputFields();
+    }
+
+    initializeInputFields() {
+        // Make all input fields in admin panel clickable
+        document.querySelectorAll('.input-with-icon').forEach(input => {
+            if (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA' || input.tagName === 'SELECT') {
+                input.addEventListener('focus', function() {
+                    this.style.borderColor = '#4ECDC4';
+                    this.style.boxShadow = '0 0 0 3px rgba(78, 205, 196, 0.2)';
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.style.borderColor = '#a5d8ff';
+                    this.style.boxShadow = 'none';
+                });
+                
+                // Make them look clickable
+                input.style.cursor = 'text';
+            }
         });
     }
 
@@ -96,10 +120,10 @@ class AdminPanel {
 
     saveSettings() {
         const newSettings = {
-            max15MinPermissions: parseInt(document.getElementById('max15Min').value),
-            max7MinPermissions: parseInt(document.getElementById('max7Min').value),
-            loginWindowHours: parseInt(document.getElementById('loginWindow').value),
-            adminCode: document.getElementById('adminCode').value
+            max15MinPermissions: parseInt(document.getElementById('max15Min').value) || 4,
+            max7MinPermissions: parseInt(document.getElementById('max7Min').value) || 3,
+            loginWindowHours: parseInt(document.getElementById('loginWindow').value) || 2,
+            adminCode: document.getElementById('adminCode').value || 'ADMIN123'
         };
 
         const result = this.db.updateSettings(newSettings);
@@ -185,9 +209,9 @@ class AdminPanel {
     saveStaff() {
         const staffId = document.getElementById('editStaffId').value;
         const staffData = {
-            name: document.getElementById('staffName').value,
-            username: document.getElementById('staffUsername').value,
-            jobdesk: document.getElementById('staffJobdesk').value,
+            name: document.getElementById('staffName').value.trim(),
+            username: document.getElementById('staffUsername').value.trim(),
+            jobdesk: document.getElementById('staffJobdesk').value.trim(),
             shiftStart: document.getElementById('staffShiftStart').value,
             shiftEnd: document.getElementById('staffShiftEnd').value
         };
@@ -196,6 +220,12 @@ class AdminPanel {
         const password = document.getElementById('staffPassword').value;
         if (password) {
             staffData.password = password;
+        }
+        
+        // Validation
+        if (!staffData.name || !staffData.username || !staffData.jobdesk) {
+            this.showNotification('Nama, username, dan jobdesk harus diisi', 'warning');
+            return;
         }
         
         let result;
@@ -239,7 +269,7 @@ class AdminPanel {
             return;
         }
         
-        if (confirm('Apakah Anda yakin ingin menghapus staff ini?')) {
+        if (confirm('Apakah Anda yakin ingin menghapus staff ini? Tindakan ini tidak dapat dibatalkan.')) {
             const result = this.db.deleteStaff(parseInt(staffId));
             
             if (result.success) {
@@ -295,13 +325,14 @@ class AdminPanel {
             const endTime = record.endTime ? new Date(record.endTime) : null;
             const duration = record.duration;
             const staff = db.staff.find(s => s.id === record.staffId);
+            const typeText = record.type === '15min' ? '15 menit' : 'Makan 7 menit';
             
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${startTime.toLocaleDateString('id-ID')}</td>
                 <td>${staff ? staff.name : 'Unknown'}</td>
                 <td>${record.staffJobdesk}</td>
-                <td>${record.type === '15min' ? '15 menit' : 'Makan 7 menit'}</td>
+                <td>${typeText}</td>
                 <td>${record.reason}</td>
                 <td>${duration} menit</td>
                 <td>
@@ -312,6 +343,41 @@ class AdminPanel {
             `;
             historyTableBody.appendChild(row);
         });
+    }
+
+    exportHistory() {
+        const db = this.db.getDatabase();
+        const history = db.permissionsHistory;
+        
+        if (history.length === 0) {
+            this.showNotification('Tidak ada data untuk diexport', 'warning');
+            return;
+        }
+        
+        // Convert to CSV
+        let csv = 'Tanggal,Staff,Jobdesk,Jenis Izin,Alasan,Durasi,Status,Waktu Mulai,Waktu Selesai\n';
+        
+        history.forEach(record => {
+            const startTime = new Date(record.startTime);
+            const endTime = record.endTime ? new Date(record.endTime) : null;
+            const staff = db.staff.find(s => s.id === record.staffId);
+            const typeText = record.type === '15min' ? '15 menit' : 'Makan 7 menit';
+            
+            csv += `"${startTime.toLocaleDateString('id-ID')}","${staff ? staff.name : 'Unknown'}","${record.staffJobdesk}","${typeText}","${record.reason}","${record.duration} menit","${record.status}","${startTime.toLocaleTimeString()}","${endTime ? endTime.toLocaleTimeString() : '-'}"\n`;
+        });
+        
+        // Create download link
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `riwayat-izin-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        this.showNotification('Data berhasil diexport', 'success');
     }
 
     loadDisplaySettings() {
@@ -326,7 +392,7 @@ class AdminPanel {
 
     updateLogoPreview(logoUrl) {
         const logoPreview = document.getElementById('logoPreview');
-        if (logoUrl) {
+        if (logoUrl && logoUrl.trim() !== '') {
             logoPreview.src = logoUrl;
             logoPreview.style.display = 'block';
         } else {
@@ -336,7 +402,7 @@ class AdminPanel {
 
     updateBackgroundPreview(bgUrl) {
         const bgPreview = document.getElementById('backgroundPreview');
-        if (bgUrl) {
+        if (bgUrl && bgUrl.trim() !== '') {
             bgPreview.style.backgroundImage = `url('${bgUrl}')`;
             bgPreview.style.display = 'block';
         } else {
@@ -346,12 +412,16 @@ class AdminPanel {
 
     saveDisplaySettings() {
         const newSettings = {
-            systemLogo: document.getElementById('systemLogo').value,
-            backgroundImage: document.getElementById('backgroundImage').value
+            systemLogo: document.getElementById('systemLogo').value.trim(),
+            backgroundImage: document.getElementById('backgroundImage').value.trim()
         };
 
         const result = this.db.updateSettings(newSettings);
         this.showNotification(result.message, result.success ? 'success' : 'warning');
+        
+        // Update preview
+        this.updateLogoPreview(newSettings.systemLogo);
+        this.updateBackgroundPreview(newSettings.backgroundImage);
     }
 
     showNotification(message, type = 'info') {
