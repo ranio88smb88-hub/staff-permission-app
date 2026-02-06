@@ -53,6 +53,22 @@ class AdminPanel {
         document.getElementById('clearStaffFormBtn').addEventListener('click', () => this.clearStaffForm());
         document.getElementById('deleteStaffBtn').addEventListener('click', () => this.deleteStaff());
 
+        // Staff password toggle
+        document.getElementById('staffPasswordToggle')?.addEventListener('click', () => {
+            const passwordInput = document.getElementById('staffPassword');
+            const toggleIcon = document.getElementById('staffPasswordToggle').querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        });
+
         // History filter
         document.getElementById('filterHistoryBtn').addEventListener('click', () => this.loadHistoryData());
         document.getElementById('exportHistoryBtn').addEventListener('click', () => this.exportHistory());
@@ -65,29 +81,6 @@ class AdminPanel {
         // Notification close
         document.querySelector('.notification-close').addEventListener('click', () => {
             this.hideNotification();
-        });
-        
-        // Initialize input fields
-        this.initializeInputFields();
-    }
-
-    initializeInputFields() {
-        // Make all input fields in admin panel clickable
-        document.querySelectorAll('.input-with-icon').forEach(input => {
-            if (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA' || input.tagName === 'SELECT') {
-                input.addEventListener('focus', function() {
-                    this.style.borderColor = '#4ECDC4';
-                    this.style.boxShadow = '0 0 0 3px rgba(78, 205, 196, 0.2)';
-                });
-                
-                input.addEventListener('blur', function() {
-                    this.style.borderColor = '#a5d8ff';
-                    this.style.boxShadow = 'none';
-                });
-                
-                // Make them look clickable
-                input.style.cursor = 'text';
-            }
         });
     }
 
@@ -143,7 +136,10 @@ class AdminPanel {
             staffTableBody.innerHTML = `
                 <tr>
                     <td colspan="5" style="text-align: center; padding: 20px;">
-                        Tidak ada data staff
+                        <div style="color: #666; font-style: italic;">
+                            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                            Tidak ada data staff
+                        </div>
                     </td>
                 </tr>
             `;
@@ -154,12 +150,12 @@ class AdminPanel {
         staff.forEach(staffMember => {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${staffMember.name}</td>
+                <td><strong>${staffMember.name}</strong></td>
                 <td>${staffMember.username}</td>
-                <td>${staffMember.jobdesk}</td>
-                <td>${staffMember.shiftStart} - ${staffMember.shiftEnd}</td>
+                <td><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">${staffMember.jobdesk}</span></td>
+                <td><span style="background: #f3e5f5; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">${staffMember.shiftStart} - ${staffMember.shiftEnd}</span></td>
                 <td>
-                    <button class="btn-edit" data-id="${staffMember.id}">
+                    <button class="btn-edit" data-id="${staffMember.id}" title="Edit staff">
                         <i class="fas fa-edit"></i> Edit
                     </button>
                 </td>
@@ -169,7 +165,7 @@ class AdminPanel {
             // Add to filter select
             const option = document.createElement('option');
             option.value = staffMember.id;
-            option.textContent = staffMember.name;
+            option.textContent = `${staffMember.name} (${staffMember.jobdesk})`;
             filterStaffSelect.appendChild(option);
         });
         
@@ -200,10 +196,13 @@ class AdminPanel {
         document.getElementById('staffShiftEnd').value = staff.shiftEnd;
         
         // Show delete button
-        document.getElementById('deleteStaffBtn').style.display = 'inline-block';
+        document.getElementById('deleteStaffBtn').style.display = 'inline-flex';
         
         // Scroll to form
         document.getElementById('staffSection').scrollIntoView({ behavior: 'smooth' });
+        
+        // Show notification
+        this.showNotification(`Sedang mengedit staff: ${staff.name}`, 'info');
     }
 
     saveStaff() {
@@ -259,6 +258,15 @@ class AdminPanel {
         document.getElementById('staffShiftStart').value = '08:00';
         document.getElementById('staffShiftEnd').value = '16:00';
         document.getElementById('deleteStaffBtn').style.display = 'none';
+        
+        // Reset password toggle icon
+        const toggleIcon = document.getElementById('staffPasswordToggle')?.querySelector('i');
+        if (toggleIcon) {
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+        
+        this.showNotification('Form telah dibersihkan', 'info');
     }
 
     deleteStaff() {
@@ -269,7 +277,8 @@ class AdminPanel {
             return;
         }
         
-        if (confirm('Apakah Anda yakin ingin menghapus staff ini? Tindakan ini tidak dapat dibatalkan.')) {
+        const staffName = document.getElementById('staffName').value;
+        if (confirm(`Apakah Anda yakin ingin menghapus staff "${staffName}"? Tindakan ini tidak dapat dibatalkan.`)) {
             const result = this.db.deleteStaff(parseInt(staffId));
             
             if (result.success) {
@@ -312,8 +321,11 @@ class AdminPanel {
         if (filteredHistory.length === 0) {
             historyTableBody.innerHTML = `
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 20px;">
-                        Tidak ada data riwayat izin
+                    <td colspan="7" style="text-align: center; padding: 40px;">
+                        <div style="color: #666; font-style: italic;">
+                            <i class="fas fa-history" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                            Tidak ada data riwayat izin
+                        </div>
                     </td>
                 </tr>
             `;
@@ -326,23 +338,40 @@ class AdminPanel {
             const duration = record.duration;
             const staff = db.staff.find(s => s.id === record.staffId);
             const typeText = record.type === '15min' ? '15 menit' : 'Makan 7 menit';
+            const statusClass = record.status === 'completed' ? 'status-completed' : 'status-active';
+            const statusText = record.status === 'completed' ? 'Selesai' : 'Aktif';
             
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${startTime.toLocaleDateString('id-ID')}</td>
-                <td>${staff ? staff.name : 'Unknown'}</td>
-                <td>${record.staffJobdesk}</td>
-                <td>${typeText}</td>
-                <td>${record.reason}</td>
-                <td>${duration} menit</td>
                 <td>
-                    <span class="permission-status ${record.status === 'completed' ? 'status-completed' : 'status-active'}">
-                        ${record.status === 'completed' ? 'Selesai' : 'Aktif'}
+                    <div style="font-weight: 500;">${startTime.toLocaleDateString('id-ID')}</div>
+                    <small style="color: #666;">${startTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}</small>
+                </td>
+                <td>
+                    <div style="font-weight: 500;">${staff ? staff.name : 'Unknown'}</div>
+                    <small style="color: #666;">${staff ? staff.username : ''}</small>
+                </td>
+                <td><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">${record.staffJobdesk}</span></td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas ${record.type === '15min' ? 'fa-coffee' : 'fa-utensils'}" style="color: #4dabf7;"></i>
+                        ${typeText}
+                    </div>
+                </td>
+                <td>${record.reason}</td>
+                <td><span style="background: #f3e5f5; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">${duration} menit</span></td>
+                <td>
+                    <span class="permission-status ${statusClass}" style="padding: 6px 12px; font-size: 0.85rem;">
+                        <i class="fas ${statusText === 'Selesai' ? 'fa-check-circle' : 'fa-clock'}"></i>
+                        ${statusText}
                     </span>
                 </td>
             `;
             historyTableBody.appendChild(row);
         });
+        
+        // Show count
+        this.showNotification(`Menampilkan ${filteredHistory.length} data riwayat izin`, 'info');
     }
 
     exportHistory() {
@@ -355,7 +384,7 @@ class AdminPanel {
         }
         
         // Convert to CSV
-        let csv = 'Tanggal,Staff,Jobdesk,Jenis Izin,Alasan,Durasi,Status,Waktu Mulai,Waktu Selesai\n';
+        let csv = 'Tanggal,Waktu,Staff,Username,Jobdesk,Jenis Izin,Alasan,Durasi,Status,Waktu Mulai,Waktu Selesai\n';
         
         history.forEach(record => {
             const startTime = new Date(record.startTime);
@@ -363,21 +392,22 @@ class AdminPanel {
             const staff = db.staff.find(s => s.id === record.staffId);
             const typeText = record.type === '15min' ? '15 menit' : 'Makan 7 menit';
             
-            csv += `"${startTime.toLocaleDateString('id-ID')}","${staff ? staff.name : 'Unknown'}","${record.staffJobdesk}","${typeText}","${record.reason}","${record.duration} menit","${record.status}","${startTime.toLocaleTimeString()}","${endTime ? endTime.toLocaleTimeString() : '-'}"\n`;
+            csv += `"${startTime.toLocaleDateString('id-ID')}","${startTime.toLocaleTimeString()}","${staff ? staff.name : 'Unknown'}","${staff ? staff.username : ''}","${record.staffJobdesk}","${typeText}","${record.reason}","${record.duration} menit","${record.status}","${startTime.toLocaleTimeString()}","${endTime ? endTime.toLocaleTimeString() : '-'}"\n`;
         });
         
         // Create download link
-        const blob = new Blob([csv], { type: 'text/csv' });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `riwayat-izin-${new Date().toISOString().split('T')[0]}.csv`;
+        const today = new Date().toISOString().split('T')[0];
+        a.download = `riwayat-izin-${today}.csv`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
         
-        this.showNotification('Data berhasil diexport', 'success');
+        this.showNotification('Data berhasil diexport ke CSV', 'success');
     }
 
     loadDisplaySettings() {
@@ -395,6 +425,10 @@ class AdminPanel {
         if (logoUrl && logoUrl.trim() !== '') {
             logoPreview.src = logoUrl;
             logoPreview.style.display = 'block';
+            logoPreview.onerror = () => {
+                logoPreview.style.display = 'none';
+                this.showNotification('Gagal memuat logo. Pastikan URL benar.', 'warning');
+            };
         } else {
             logoPreview.style.display = 'none';
         }
@@ -404,9 +438,15 @@ class AdminPanel {
         const bgPreview = document.getElementById('backgroundPreview');
         if (bgUrl && bgUrl.trim() !== '') {
             bgPreview.style.backgroundImage = `url('${bgUrl}')`;
-            bgPreview.style.display = 'block';
+            bgPreview.innerHTML = '';
+            bgPreview.onerror = () => {
+                bgPreview.innerHTML = 'Gagal memuat gambar';
+                bgPreview.style.backgroundImage = '';
+                this.showNotification('Gagal memuat background. Pastikan URL benar.', 'warning');
+            };
         } else {
-            bgPreview.style.display = 'none';
+            bgPreview.style.backgroundImage = '';
+            bgPreview.innerHTML = 'Pratinjau akan muncul di sini';
         }
     }
 
