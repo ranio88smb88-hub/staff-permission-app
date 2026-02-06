@@ -1,5 +1,4 @@
-// Aplikasi Izin Staff - Main JavaScript
-class StaffPermissionApp {
+StaffPermissionApp {
     constructor() {
         this.db = database;
         this.currentUser = null;
@@ -7,6 +6,7 @@ class StaffPermissionApp {
         this.currentTimeInterval = null;
         this.activePermissionCheckInterval = null;
         this.activePermissionTimer = null;
+        this.dashboardRefreshInterval = null;
         
         this.initializeApp();
     }
@@ -16,6 +16,7 @@ class StaffPermissionApp {
         this.updateTimeDisplay();
         this.checkLoginStatus();
         this.initializeInputFeatures();
+        this.initializeRealTimeUpdates();
     }
 
     initializeEventListeners() {
@@ -42,6 +43,9 @@ class StaffPermissionApp {
         document.querySelector('.notification-close')?.addEventListener('click', () => {
             this.hideNotification();
         });
+        
+        // Quick action buttons
+        this.initializeQuickActions();
     }
 
     initializeInputFeatures() {
@@ -77,6 +81,41 @@ class StaffPermissionApp {
                 document.getElementById('username')?.focus();
             }, 300);
         }
+    }
+
+    initializeQuickActions() {
+        // Quick permission buttons
+        const quickActions = document.querySelector('.quick-actions');
+        if (quickActions) {
+            quickActions.addEventListener('click', (e) => {
+                const target = e.target.closest('.quick-action');
+                if (target) {
+                    const type = target.dataset.type;
+                    if (type) {
+                        this.selectQuickPermission(type);
+                    }
+                }
+            });
+        }
+    }
+
+    selectQuickPermission(type) {
+        this.currentPermissionType = type;
+        document.getElementById('permissionReason').focus();
+        this.showNotification(`Jenis izin "${type === '15min' ? '15 menit' : 'Makan 7 menit'}" dipilih`, 'info');
+    }
+
+    initializeRealTimeUpdates() {
+        // Real-time update untuk dashboard
+        if (this.dashboardRefreshInterval) {
+            clearInterval(this.dashboardRefreshInterval);
+        }
+        
+        this.dashboardRefreshInterval = setInterval(() => {
+            if (this.currentUser && !this.currentUser.isAdmin) {
+                this.loadDashboardData();
+            }
+        }, 5000); // Update setiap 5 detik
     }
 
     checkLoginStatus() {
@@ -156,17 +195,11 @@ class StaffPermissionApp {
         this.currentUser = null;
         localStorage.removeItem('currentStaffUser');
         
-        if (this.currentTimeInterval) {
-            clearInterval(this.currentTimeInterval);
-        }
-        
-        if (this.activePermissionCheckInterval) {
-            clearInterval(this.activePermissionCheckInterval);
-        }
-        
-        if (this.activePermissionTimer) {
-            clearInterval(this.activePermissionTimer);
-        }
+        // Clear semua interval
+        [this.currentTimeInterval, this.activePermissionCheckInterval, 
+         this.activePermissionTimer, this.dashboardRefreshInterval].forEach(interval => {
+            if (interval) clearInterval(interval);
+        });
         
         this.showLoginScreen();
         this.showNotification('Anda telah logout', 'info');
@@ -201,6 +234,9 @@ class StaffPermissionApp {
         if (firstPermissionType) {
             this.selectPermissionType(firstPermissionType);
         }
+        
+        // Start real-time updates
+        this.initializeRealTimeUpdates();
     }
 
     updateShiftInfoDisplay() {
@@ -236,11 +272,31 @@ class StaffPermissionApp {
         document.getElementById('staffShift').textContent = `Shift: ${staff.shiftStart} - ${staff.shiftEnd}`;
         document.getElementById('loggedInUser').textContent = staff.name;
         
-        // Update quota
-        const settings = db.settings;
+        // Update quota dengan progress bar
+        this.updateQuotaDisplay(staff, db.settings);
+        
+        // Load active permissions dengan monitoring real-time
+        this.loadActivePermissions();
+        
+        // Load history
+        this.loadPermissionHistory();
+        
+        // Load statistics
+        this.loadDashboardStatistics();
+        
+        // Check if user has active permission
+        const activePermission = db.activePermissions.find(ap => ap.staffId === this.currentUser.id);
+        if (activePermission) {
+            this.showActivePermissionInfo(activePermission);
+            this.startSleepingAnimation();
+        }
+    }
+
+    updateQuotaDisplay(staff, settings) {
         const remaining15 = settings.max15MinPermissions - (staff.permissionsToday['15min'] || 0);
         const remaining7 = settings.max7MinPermissions - (staff.permissionsToday['7min'] || 0);
         
+        // Update quota numbers
         document.getElementById('quota15Min').textContent = 
             `${remaining15}/${settings.max15MinPermissions}`;
         document.getElementById('quota7Min').textContent = 
@@ -249,17 +305,22 @@ class StaffPermissionApp {
         document.getElementById('remaining15').textContent = remaining15;
         document.getElementById('remaining7').textContent = remaining7;
         
-        // Load active permissions
-        this.loadActivePermissions();
+        // Update progress bars
+        const progress15 = document.getElementById('progress15min');
+        const progress7 = document.getElementById('progress7min');
         
-        // Load history
-        this.loadPermissionHistory();
+        if (progress15) {
+            const percentage15 = ((staff.permissionsToday['15min'] || 0) / settings.max15MinPermissions) * 100;
+            progress15.style.width = `${percentage15}%`;
+            progress15.style.background = percentage15 >= 80 ? 'var(--danger)' : 
+                                        percentage15 >= 50 ? 'var(--warning)' : 'var(--success)';
+        }
         
-        // Check if user has active permission
-        const activePermission = db.activePermissions.find(ap => ap.staffId === this.currentUser.id);
-        if (activePermission) {
-            this.showActivePermissionInfo(activePermission);
-            this.startSleepingAnimation();
+        if (progress7) {
+            const percentage7 = ((staff.permissionsToday['7min'] || 0) / settings.max7MinPermissions) * 100;
+            progress7.style.width = `${percentage7}%`;
+            progress7.style.background = percentage7 >= 80 ? 'var(--danger)' : 
+                                       percentage7 >= 50 ? 'var(--warning)' : 'var(--success)';
         }
     }
 
@@ -332,11 +393,21 @@ class StaffPermissionApp {
             const seconds = Math.floor((timeLeft % 60000) / 1000);
             
             activePermissionInfo.innerHTML = `
-                <h4><i class="fas fa-running"></i> Izin Aktif</h4>
-                <p><strong>Jenis:</strong> ${permission.type === '15min' ? '15 menit' : 'Makan 7 menit'}</p>
-                <p><strong>Alasan:</strong> ${permission.reason}</p>
-                <p><strong>Sisa waktu:</strong> <span class="time-left">${minutes}:${seconds.toString().padStart(2, '0')}</span></p>
-                <button id="endPermissionBtn" class="btn-secondary" style="margin-top: 10px;">
+                <div class="active-permission-header">
+                    <h4><i class="fas fa-running"></i> Izin Aktif</h4>
+                    <span class="permission-type-badge ${permission.type}">
+                        ${permission.type === '15min' ? '15 menit' : 'Makan 7 menit'}
+                    </span>
+                </div>
+                <div class="active-permission-details">
+                    <p><strong><i class="fas fa-comment"></i> Alasan:</strong> ${permission.reason}</p>
+                    <p><strong><i class="fas fa-clock"></i> Dimulai:</strong> ${startTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}</p>
+                    <div class="countdown-timer">
+                        <span class="timer-label">Sisa waktu:</span>
+                        <span class="time-left">${minutes}:${seconds.toString().padStart(2, '0')}</span>
+                    </div>
+                </div>
+                <button id="endPermissionBtn" class="btn-secondary">
                     <i class="fas fa-stop-circle"></i> Akhiri Izin
                 </button>
             `;
@@ -383,8 +454,11 @@ class StaffPermissionApp {
         if (activePermissions.length === 0) {
             onPermissionList.innerHTML = `
                 <div class="empty-state">
-                    <i class="fas fa-user-slash"></i>
-                    <p>Tidak ada staff yang sedang izin</p>
+                    <div class="empty-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h3>Semua Staff Aktif</h3>
+                    <p>Tidak ada staff yang sedang izin saat ini</p>
                 </div>
             `;
             return;
@@ -397,27 +471,51 @@ class StaffPermissionApp {
             const endTime = new Date(startTime.getTime() + permission.duration * 60000);
             const now = new Date();
             const timeLeft = Math.max(0, Math.floor((endTime - now) / 60000));
+            const secondsLeft = Math.max(0, Math.floor(((endTime - now) % 60000) / 1000));
+            
+            // Hitung progress persentase
+            const totalDuration = permission.duration * 60; // dalam detik
+            const elapsed = Math.floor((now - startTime) / 1000);
+            const progressPercentage = Math.min(100, (elapsed / totalDuration) * 100);
             
             const permissionElement = document.createElement('div');
             permissionElement.className = 'staff-item';
             permissionElement.innerHTML = `
                 <div class="staff-info">
-                    <div class="staff-avatar">
-                        <i class="fas fa-user"></i>
+                    <div class="staff-avatar ${permission.type}">
+                        <i class="fas ${permission.type === '15min' ? 'fa-coffee' : 'fa-utensils'}"></i>
                     </div>
                     <div class="staff-details">
-                        <h4>${permission.staffName}</h4>
-                        <p>${permission.staffJobdesk}</p>
-                        <p><small>${permission.reason}</small></p>
+                        <div class="staff-name-row">
+                            <h4>${permission.staffName}</h4>
+                            <span class="staff-status active">Sedang Izin</span>
+                        </div>
+                        <p class="staff-jobdesk">${permission.staffJobdesk}</p>
+                        <p class="staff-reason">"${permission.reason}"</p>
+                        <div class="time-info">
+                            <small><i class="fas fa-clock"></i> Mulai: ${startTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}</small>
+                        </div>
                     </div>
                 </div>
-                <div class="permission-status status-active">
-                    <i class="fas fa-clock"></i> ${timeLeft} menit
+                <div class="permission-timer">
+                    <div class="timer-display">
+                        <span class="time-left">${timeLeft}:${secondsLeft.toString().padStart(2, '0')}</span>
+                        <small>Sisa waktu</small>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${progressPercentage}%"></div>
+                    </div>
                 </div>
             `;
             
             onPermissionList.appendChild(permissionElement);
         });
+        
+        // Update count badge
+        const badge = document.querySelector('.on-permission-badge');
+        if (badge) {
+            badge.textContent = activePermissions.length;
+        }
     }
 
     loadPermissionHistory() {
@@ -429,8 +527,11 @@ class StaffPermissionApp {
         if (history.length === 0) {
             historyList.innerHTML = `
                 <div class="empty-state">
-                    <i class="fas fa-history"></i>
-                    <p>Belum ada riwayat izin</p>
+                    <div class="empty-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h3>Belum Ada Riwayat</h3>
+                    <p>Anda belum pernah mengajukan izin</p>
                 </div>
             `;
             return;
@@ -440,30 +541,82 @@ class StaffPermissionApp {
         
         history.forEach(record => {
             const startTime = new Date(record.startTime);
-            const typeText = record.type === '15min' ? 'Izin 15 menit' : 'Izin makan 7 menit';
-            const statusClass = record.status === 'completed' ? 'status-completed' : 'status-active';
+            const endTime = record.endTime ? new Date(record.endTime) : null;
+            const typeText = record.type === '15min' ? '15 menit' : 'Makan 7 menit';
+            const statusClass = record.status === 'completed' ? 'completed' : 'active';
             const statusText = record.status === 'completed' ? 'Selesai' : 'Aktif';
+            
+            const duration = endTime ? 
+                Math.round((endTime - startTime) / 60000) : record.duration;
             
             const historyElement = document.createElement('div');
             historyElement.className = 'history-item';
             historyElement.innerHTML = `
                 <div class="history-info">
-                    <div class="history-avatar">
+                    <div class="history-icon ${record.type}">
                         <i class="fas ${record.type === '15min' ? 'fa-coffee' : 'fa-utensils'}"></i>
                     </div>
                     <div class="history-details">
-                        <h4>${typeText}</h4>
-                        <p>${record.reason}</p>
-                        <p><small>${startTime.toLocaleDateString('id-ID')} ${startTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}</small></p>
+                        <div class="history-header">
+                            <h4>${typeText}</h4>
+                            <span class="history-status ${statusClass}">${statusText}</span>
+                        </div>
+                        <p class="history-reason">${record.reason}</p>
+                        <div class="history-time">
+                            <small><i class="fas fa-calendar"></i> ${startTime.toLocaleDateString('id-ID')}</small>
+                            <small><i class="fas fa-clock"></i> ${startTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}</small>
+                            <small><i class="fas fa-hourglass"></i> ${duration} menit</small>
+                        </div>
                     </div>
-                </div>
-                <div class="permission-status ${statusClass}">
-                    ${statusText}
                 </div>
             `;
             
             historyList.appendChild(historyElement);
         });
+    }
+
+    loadDashboardStatistics() {
+        const db = this.db.getDatabase();
+        const staff = db.staff.find(s => s.id === this.currentUser.id);
+        
+        if (!staff) return;
+        
+        const today = new Date().toISOString().split('T')[0];
+        const myHistory = db.permissionsHistory.filter(h => 
+            h.staffId === this.currentUser.id && 
+            h.startTime.includes(today)
+        );
+        
+        // Update statistics
+        const statsElement = document.getElementById('todayStats');
+        if (statsElement) {
+            const used15 = staff.permissionsToday['15min'] || 0;
+            const used7 = staff.permissionsToday['7min'] || 0;
+            
+            statsElement.innerHTML = `
+                <div class="stat-item">
+                    <i class="fas fa-clock"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">${used15}</span>
+                        <span class="stat-label">Izin 15 menit</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-utensils"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">${used7}</span>
+                        <span class="stat-label">Izin makan</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-chart-line"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">${myHistory.length}</span>
+                        <span class="stat-label">Total hari ini</span>
+                    </div>
+                </div>
+            `;
+        }
     }
 
     startSleepingAnimation() {
@@ -528,13 +681,32 @@ class StaffPermissionApp {
         
         notificationText.textContent = message;
         
-        // Set color based on type
+        // Set icon based on type
+        let icon = 'info-circle';
+        if (type === 'success') icon = 'check-circle';
+        if (type === 'warning') icon = 'exclamation-triangle';
+        if (type === 'error') icon = 'times-circle';
+        
         notification.style.borderLeftColor = 
             type === 'success' ? '#2ecc71' : 
             type === 'warning' ? '#f39c12' : 
             type === 'error' ? '#e74c3c' : '#1a73e8';
         
         notification.style.display = 'block';
+        notification.innerHTML = `
+            <div class="notification-content">
+                <div class="notification-icon">
+                    <i class="fas fa-${icon}"></i>
+                </div>
+                <span id="notificationText">${message}</span>
+                <button class="notification-close">&times;</button>
+            </div>
+        `;
+        
+        // Re-add close event listener
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            this.hideNotification();
+        });
         
         // Auto hide after 5 seconds
         setTimeout(() => {
