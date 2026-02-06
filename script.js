@@ -3,7 +3,7 @@ class StaffPermissionApp {
     constructor() {
         this.db = database;
         this.currentUser = null;
-        this.currentPermissionType = '15min'; // Default
+        this.currentPermissionType = '15min';
         this.currentTimeInterval = null;
         this.activePermissionCheckInterval = null;
         this.activePermissionTimer = null;
@@ -321,7 +321,7 @@ class StaffPermissionApp {
         
         const updateTimer = () => {
             const now = new Date();
-            const timeLeft = Math.max(0, endTime - now);
+            const timeLeft = endTime - now;
             
             if (timeLeft <= 0) {
                 this.endActivePermission(permission.id, true);
