@@ -6,6 +6,7 @@
     <title>Admin - Sistem Izin Staff</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Quicksand:wght@400;500;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -13,7 +14,7 @@
             <!-- Admin Header -->
             <header class="admin-header">
                 <div class="header-left">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3067/3067256.png" alt="Logo" class="dashboard-logo">
+                    <img src="https://cdn-icons-png.flaticon.com/512/869/869869.png" alt="Logo" class="dashboard-logo">
                     <h1><i class="fas fa-cogs"></i> Admin Panel</h1>
                 </div>
                 <div class="header-right">
@@ -57,22 +58,22 @@
                         <div class="settings-form">
                             <div class="input-group">
                                 <label for="max15Min"><i class="fas fa-clock"></i> Maksimal Izin 15 Menit per Hari</label>
-                                <input type="number" id="max15Min" min="1" max="10" value="4">
+                                <input type="number" id="max15Min" min="1" max="10" value="4" class="input-with-icon">
                             </div>
                             
                             <div class="input-group">
                                 <label for="max7Min"><i class="fas fa-utensils"></i> Maksimal Izin Makan 7 Menit per Hari</label>
-                                <input type="number" id="max7Min" min="1" max="10" value="3">
+                                <input type="number" id="max7Min" min="1" max="10" value="3" class="input-with-icon">
                             </div>
                             
                             <div class="input-group">
                                 <label for="loginWindow"><i class="fas fa-door-open"></i> Jendela Login (jam setelah shift)</label>
-                                <input type="number" id="loginWindow" min="1" max="24" value="2">
+                                <input type="number" id="loginWindow" min="1" max="24" value="2" class="input-with-icon">
                             </div>
                             
                             <div class="input-group">
                                 <label for="adminCode"><i class="fas fa-key"></i> Kode Admin</label>
-                                <input type="text" id="adminCode" value="ADMIN123">
+                                <input type="text" id="adminCode" value="ADMIN123" class="input-with-icon">
                                 <small>Kode untuk akses admin tambahan</small>
                             </div>
                             
@@ -114,33 +115,33 @@
                                     
                                     <div class="input-group">
                                         <label for="staffName"><i class="fas fa-id-card"></i> Nama Lengkap</label>
-                                        <input type="text" id="staffName" placeholder="Nama staff">
+                                        <input type="text" id="staffName" placeholder="Nama staff" class="input-with-icon">
                                     </div>
                                     
                                     <div class="input-group">
                                         <label for="staffUsername"><i class="fas fa-user"></i> Username</label>
-                                        <input type="text" id="staffUsername" placeholder="Username untuk login">
+                                        <input type="text" id="staffUsername" placeholder="Username untuk login" class="input-with-icon">
                                     </div>
                                     
                                     <div class="input-group">
                                         <label for="staffPassword"><i class="fas fa-lock"></i> Password</label>
-                                        <input type="password" id="staffPassword" placeholder="Password">
+                                        <input type="password" id="staffPassword" placeholder="Password" class="input-with-icon">
                                         <small>Kosongkan jika tidak ingin mengubah password</small>
                                     </div>
                                     
                                     <div class="input-group">
                                         <label for="staffJobdesk"><i class="fas fa-briefcase"></i> Jobdesk</label>
-                                        <input type="text" id="staffJobdesk" placeholder="Jobdesk staff">
+                                        <input type="text" id="staffJobdesk" placeholder="Jobdesk staff" class="input-with-icon">
                                     </div>
                                     
                                     <div class="input-group">
                                         <label for="staffShiftStart"><i class="fas fa-clock"></i> Shift Mulai</label>
-                                        <input type="time" id="staffShiftStart" value="08:00">
+                                        <input type="time" id="staffShiftStart" value="08:00" class="input-with-icon">
                                     </div>
                                     
                                     <div class="input-group">
                                         <label for="staffShiftEnd"><i class="fas fa-clock"></i> Shift Selesai</label>
-                                        <input type="time" id="staffShiftEnd" value="16:00">
+                                        <input type="time" id="staffShiftEnd" value="16:00" class="input-with-icon">
                                     </div>
                                     
                                     <div class="form-buttons">
@@ -166,18 +167,21 @@
                         <div class="history-filters">
                             <div class="input-group">
                                 <label for="filterDate"><i class="fas fa-calendar"></i> Tanggal</label>
-                                <input type="date" id="filterDate">
+                                <input type="date" id="filterDate" class="input-with-icon">
                             </div>
                             
                             <div class="input-group">
                                 <label for="filterStaff"><i class="fas fa-user"></i> Staff</label>
-                                <select id="filterStaff">
+                                <select id="filterStaff" class="input-with-icon">
                                     <option value="">Semua Staff</option>
                                 </select>
                             </div>
                             
                             <button id="filterHistoryBtn" class="btn-primary">
                                 <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <button id="exportHistoryBtn" class="btn-secondary">
+                                <i class="fas fa-download"></i> Export
                             </button>
                         </div>
                         
@@ -208,24 +212,24 @@
                         <div class="system-display-form">
                             <div class="input-group">
                                 <label for="systemLogo"><i class="fas fa-image"></i> URL Logo Sistem</label>
-                                <input type="text" id="systemLogo" placeholder="https://example.com/logo.png">
+                                <input type="text" id="systemLogo" placeholder="https://example.com/logo.png" class="input-with-icon">
                                 <small>Masukkan URL gambar untuk logo sistem</small>
                             </div>
                             
                             <div class="logo-preview">
                                 <h4>Pratinjau Logo:</h4>
-                                <img id="logoPreview" src="" alt="Pratinjau Logo" style="max-width: 100px; margin-top: 10px;">
+                                <img id="logoPreview" src="" alt="Pratinjau Logo" style="max-width: 100px; margin-top: 10px; display: none;">
                             </div>
                             
                             <div class="input-group">
                                 <label for="backgroundImage"><i class="fas fa-wallpaper"></i> URL Background</label>
-                                <input type="text" id="backgroundImage" placeholder="https://example.com/background.jpg">
+                                <input type="text" id="backgroundImage" placeholder="https://example.com/background.jpg" class="input-with-icon">
                                 <small>Masukkan URL gambar untuk background (opsional)</small>
                             </div>
                             
                             <div class="background-preview">
                                 <h4>Pratinjau Background:</h4>
-                                <div id="backgroundPreview" style="width: 100%; height: 150px; background-size: cover; margin-top: 10px; border-radius: 10px;"></div>
+                                <div id="backgroundPreview" style="width: 100%; height: 150px; background-size: cover; margin-top: 10px; border-radius: 10px; display: none;"></div>
                             </div>
                             
                             <button id="saveDisplaySettingsBtn" class="btn-primary">
@@ -234,6 +238,17 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Ocean Background -->
+            <div class="ocean-background">
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="fish fish1"></div>
+                <div class="fish fish2"></div>
+                <div class="bubble bubble1"></div>
+                <div class="bubble bubble2"></div>
             </div>
         </div>
     </div>
