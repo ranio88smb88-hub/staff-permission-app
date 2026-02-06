@@ -1,4 +1,5 @@
-StaffPermissionApp {
+// Aplikasi Izin Staff - Main JavaScript (VERSION 2.0)
+class StaffPermissionApp {
     constructor() {
         this.db = database;
         this.currentUser = null;
